@@ -7,9 +7,22 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/components/ui/table";
-
+import { Badge } from "../../components/components/ui/badge";
+import { Switch } from "../../components/components/ui/switch";
+import { Button } from "../../components/components/ui/button";
+import { Checkbox } from "../../components/components/ui/checkbox";
 import {
-  ChevronDown,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/components/ui/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../components/components/ui/avatar";
+import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
@@ -27,10 +40,12 @@ import {
 } from "../../components/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import { Dialog, Transition } from "@headlessui/react";
+import DetailAbonnement from "./detailMessageStruct";
 import TMModal from "../../components/components/ui/TM_Modal";
-
-import DetailFormation from "./detailFormation";
+import DetailRendez from "./detailMessageStruct";
+import DetailMessage from "./detailMessageStruct";
 import TotalLoad from "../../components/components/totalLoad";
+import { Label } from "../../components/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -38,130 +53,175 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/components/ui/select";
-import useStoreAllFormation from "src/store/formation/getAll";
+import dayjs from "dayjs";
 import Pagination from "../../components/components/ui/pagination";
-import useStoreCategories from "src/store/categorie/getAll";
+import useStoreCategoriesVid from "src/store/categorieVideo/getAll";
 
-export default function FormationCont() {
+export default function CategorieVideo() {
   const [isChecked, setIsChecked] = useState(false);
+  const [isSwitched, setIsSwitched] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [detailCard, setDetailCard] = useState(false);
 
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
-
-  const { Categories, loadingCategories, fetchCategories } =
-    useStoreCategories();
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  const [adresse, setAdresse] = useState("");
+  const [date, setDate] = useState("");
+  const [statut, setStatut] = useState("");
 
   const navigate = useNavigate();
 
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
-  const { AllFormation, loadingAllFormation, fetchAllFormation, count } =
-    useStoreAllFormation();
+  const { CategoriesVid, loadingCategoriesVid, fetchCategoriesVid, count } =
+    useStoreCategoriesVid();
 
-  console.log("AllFormation", AllFormation);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [search]);
+  const handleSearch = (e: string) => {
+    setSearch(e);
+    setPage(1);
+  };
 
   useEffect(() => {
-    fetchAllFormation({ page, limit: 6, search: debouncedSearch });
-  }, [page, debouncedSearch, fetchAllFormation]);
+    fetchCategoriesVid({ page, limit: 7 });
+  }, [page, fetchCategoriesVid]);
 
-  if (loadingAllFormation) {
+  if (loadingCategoriesVid) {
     return <TotalLoad />;
   }
 
+  console.log("CategoriesVid", CategoriesVid);
+
   return (
-    <div className="flex flex-col p-4 h-full mt-14">
+    <div className="flex flex-col p-4 h-full">
       <div className="flex justify-end">
         <div
-          className="flex items-center gap-2 bg-primary p-2 rounded-full my-3   text-white cursor-pointer"
+          className="flex gap-2 items-center bg-primary p-2 rounded-full my-3 cursor-pointer  text-white"
           onClick={() => {
-            navigate("/ajouter_formation");
+            navigate("/add_categorieVideo");
           }}
         >
-          <PlusCircle className="w-4 h-4" /> Ajouter une formation
+          <PlusCircle className="w-4 h-4" /> Ajouter une Catégorie
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-5 border border-gray-200 p-2 bg-white">
-        <div className="relative flex gap-2 ">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">
+            <div className="flex items-center justify-between ">
+              <div>
+                <p className="text-lg">Nombre total de Catégorie </p>
+
+                <p className="text-2xl font-bold">
+                  {count}
+                  {/*                   <span className="text-green-500 text-sm ml-1">+5.2%</span>
+                   */}{" "}
+                </p>
+              </div>
+            </div>{" "}
+          </CardTitle>
+        </CardHeader>
+      </Card>
+
+      <div className="flex items-center justify-between mb-1 border border-gray-200 p-2 bg-white">
+        <div className="relative">
           <input
             type="text"
             placeholder="Rechercher"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
             className="pl-10 pr-4 py-1 rounded-md bg-white border border-gray-300 focus:outline-none"
           />
           <FaSearch className="absolute top-3 left-3 text-gray-400" />
+        </div>{" "}
+        <div className="space-x-2">
+          <Button variant="outline" size="sm">
+            <img
+              src="/Iconfleche.svg"
+              // alt="Avatar"
+              className="h-6 w-6 rounded-full"
+            />
+          </Button>
 
-          <Popover>
-            <PopoverTrigger className="flex bg-gray-100 text-left px-4 py-1 text-sm border rounded-md hover:bg-gray-100 gap-1">
+          {/*    <Button variant="outline" size="sm">
               <img
                 src="/iconFil.svg"
                 // alt="Avatar"
                 className="h-6 w-6 rounded-full"
               />{" "}
-              <span>Categories</span>
-              <ChevronDown className="w-5 h-5 text-gray-600" />
+            </Button> */}
+
+          <Popover>
+            <PopoverTrigger className=" bg-white text-left px-4 py-1 text-sm  border rounded-md hover:bg-gray-100">
+              <img
+                src="/iconFil.svg"
+                // alt="Avatar"
+                className="h-6 w-6 rounded-full"
+              />{" "}
             </PopoverTrigger>
             <PopoverContent className="">
               <div className="p-4 space-y-4">
-                {/* Type */}
-                <div className="space-y-1">
-                  <Select
-                    onValueChange={(value) => {
-                      const selectedId: any = Number(value);
-                      fetchAllFormation({ categoryId: selectedId });
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Sélectionner une catégorie" />
-                    </SelectTrigger>
+                <h2 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  Filtre
+                </h2>
 
+                {/* Adresse */}
+                <div className="space-y-1">
+                  <Label htmlFor="adresse">Adresse</Label>
+                  <Select value={adresse} onValueChange={setAdresse}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sélectionner une adresse" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {Categories?.length > 0 ? (
-                        Categories.map((cat: any) => (
-                          <SelectItem
-                            key={cat.categoryId}
-                            value={String(cat.categoryId)}
-                          >
-                            {cat.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem disabled value="">
-                          Aucune catégorie disponible
-                        </SelectItem>
-                      )}
+                      <SelectItem value="adresse1">Adresse 1</SelectItem>
+                      <SelectItem value="adresse2">Adresse 2</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Date */}
+                <div className="space-y-1">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    id="date"
+                  />
+                </div>
+
+                {/* Statut */}
+                <div className="space-y-1">
+                  <Label htmlFor="statut">Statut</Label>
+                  <Select value={statut} onValueChange={setStatut}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sélectionner le statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="valide">Validé</SelectItem>
+                      <SelectItem value="en_cours">En cours</SelectItem>
+                      <SelectItem value="rejeté">Rejeté</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Boutons */}
+                <div className="flex justify-between pt-2 ">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setAdresse("");
+                      setDate("");
+                      setStatut("");
+                    }}
+                    className="rounded-full"
+                  >
+                    Réinitialiser
+                  </Button>
+                  <Button className="bg-[#1d3557] hover:bg-[#16314e] rounded-full text-white">
+                    Appliquer
+                  </Button>
                 </div>
               </div>
             </PopoverContent>
           </Popover>
-        </div>{" "}
-        <button
-          className="rounded-full text-white bg-primary"
-          onClick={() => {
-            fetchAllFormation({ page, limit: 6, search: debouncedSearch });
-          }}
-        >
-          Annuler filtre
-        </button>
+        </div>
       </div>
 
       <Table className="bg-white">
@@ -174,17 +234,14 @@ export default function FormationCont() {
                 onChange={(e) => setIsChecked(e.target.checked)}
               />{" "}
             </TableHead>
-            <TableHead>Nom du formulaire</TableHead>
-            <TableHead>Service</TableHead>
-            <TableHead>Heur de creation</TableHead>
-            {/*             <TableHead>Nombre de symptomes</TableHead>
-             */}{" "}
-            <TableHead>Date de création</TableHead>
+            <TableHead>Nom de Catégories</TableHead>
+            <TableHead>description</TableHead>
+            <TableHead>Date de creation</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {AllFormation?.map((a: any, i: any) => (
+          {CategoriesVid?.map((a, i) => (
             <TableRow
               key={i}
               //  className="cursor-pointer"
@@ -202,18 +259,12 @@ export default function FormationCont() {
               <TableCell className="flex items-center gap-2">
                 {a.name}
               </TableCell>
-              <TableCell className="text-blue-600">{a.comment}</TableCell>
+              <TableCell className="text-blue-600">{a.description}</TableCell>
               <TableCell>
-                {new Date(a.createdAt).toLocaleTimeString("fr-FR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </TableCell>{" "}
-              {/*               <TableCell>5</TableCell>
-               */}{" "}
-              <TableCell>
-                {new Date(a.createdAt).toLocaleDateString("fr-FR")}
+                {" "}
+                {dayjs(a.createdAt).format("DD/MM/YYYY HH:mm")}
               </TableCell>
+
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <Popover>
                   <PopoverTrigger className=" bg-gray-200 text-left px-4 py-1 text-sm  border rounded-md hover:bg-gray-100">
@@ -326,7 +377,7 @@ export default function FormationCont() {
         size="md"
         height={70}
       >
-        <DetailFormation
+        <DetailMessage
         /*   idcartes={idCarte}
           descriptions={descriptions}
           nomCart={nomCart} */

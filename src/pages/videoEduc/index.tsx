@@ -279,42 +279,64 @@ export default function Video() {
                 label=""
                 checked={isChecked}
                 onChange={(e) => setIsChecked(e.target.checked)}
-              />{" "}
+              />
             </TableHead>
-            <TableHead>Nom de vidéos</TableHead>
+            <TableHead>Nom de la vidéo</TableHead>
             <TableHead>Catégorie</TableHead>
-            <TableHead>Date de creation</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Date de création</TableHead>
+            <TableHead>Lien</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
-          {Videos?.map((a, i) => (
-            <TableRow
-              key={i}
-              //  className="cursor-pointer"
-              onClick={() => {
-                //  navigate("/detail_patient");
-              }}
-            >
+          {Videos?.map((video, i) => (
+            <TableRow key={i}>
               <TableCell>
                 <CustomCheckbox
                   label=""
                   checked={isChecked}
                   onChange={(e) => setIsChecked(e.target.checked)}
-                />{" "}
-              </TableCell>
-              <TableCell className="flex items-center gap-2">
-                {a.title}
-              </TableCell>
-              <TableCell className="text-blue-600">{a.category}</TableCell>
-              <TableCell>
-                {" "}
-                {dayjs(a.createdAt).format("DD/MM/YYYY HH:mm")}
+                />
               </TableCell>
 
+              {/* 🧾 Nom */}
+              <TableCell className="font-medium text-gray-800">
+                {video.title}
+              </TableCell>
+
+              {/* 🧩 Catégorie */}
+              <TableCell className="text-blue-600">
+                {video.category?.name || "Non catégorisée"}
+              </TableCell>
+
+              {/* 📝 Description */}
+              <TableCell className="text-gray-600 max-w-xs truncate">
+                {video.description || "Aucune description"}
+              </TableCell>
+
+              {/* 📅 Date */}
+              <TableCell>
+                {dayjs(video.createdAt).format("DD/MM/YYYY HH:mm")}
+              </TableCell>
+
+              {/* 🔗 Lien cliquable */}
+              <TableCell>
+                <a
+                  href={video.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:text-blue-700"
+                >
+                  Voir la vidéo
+                </a>
+              </TableCell>
+
+              {/* ⋮ Actions */}
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <Popover>
-                  <PopoverTrigger className=" bg-gray-200 text-left px-4 py-1 text-sm  border rounded-md hover:bg-gray-100">
+                  <PopoverTrigger className="bg-gray-200 text-left px-4 py-1 text-sm border rounded-md hover:bg-gray-100">
                     <MoreHorizontal className="w-4 h-4" />
                   </PopoverTrigger>
                   <PopoverContent className="p-4 w-full">
@@ -323,23 +345,12 @@ export default function Video() {
                         className="flex items-center gap-2 p-2 border-b last:border-none"
                         onClick={(event) => {
                           event.stopPropagation();
-                          setDetailCard(true);
-
-                          //  handleRowClick(item.id);
+                          // Tu peux afficher les détails ou naviguer
                         }}
-                        // navigate(0);
                       >
-                        <FaEdit
-                          className="text-gray-600 text-lg cursor-pointer"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setDetailCard(true);
-
-                            //  handleRowClick(item.id);
-                          }}
-                        />
-                        <span className="font-medium text-gray-500 text-sm hover:text-gray-600 transition-colors duration-200">
-                          Detail
+                        <FaEdit className="text-gray-600 text-lg" />
+                        <span className="font-medium text-gray-600 text-sm">
+                          Modifier
                         </span>
                       </li>
 
@@ -347,15 +358,12 @@ export default function Video() {
                         className="flex items-center gap-2 p-2 border-b last:border-none"
                         onClick={(event) => {
                           event.stopPropagation();
-
-                          // setSelectedUser(item.id);
                           setIsOpen(true);
                         }}
-                        // navigate(0);
                       >
-                        <FaTrash className="text-red-600 text-lg cursor-pointer" />
-                        <span className="font-medium text-red-500 text-sm hover:text-red-600 transition-colors duration-200">
-                          supprimer
+                        <FaTrash className="text-red-600 text-lg" />
+                        <span className="font-medium text-red-500 text-sm">
+                          Supprimer
                         </span>
                       </li>
                     </ul>
@@ -365,6 +373,7 @@ export default function Video() {
             </TableRow>
           ))}
         </TableBody>
+
         <TableFooter className="bg-white">
           <TableRow>
             <TableCell colSpan={7}>
