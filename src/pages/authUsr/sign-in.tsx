@@ -57,7 +57,7 @@ const SignIn = () => {
           description: "Bienvenue sur Dokita 🚀",
         });
 
-        navigate("/");
+        navigate("/home");
       } else {
         toast({
           variant: "destructive",

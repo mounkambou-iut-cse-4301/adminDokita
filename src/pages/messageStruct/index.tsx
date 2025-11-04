@@ -30,7 +30,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import TMModal from "../../components/components/ui/TM_Modal";
 import DetailMessage from "./detailMessageStruct";
 import TotalLoad from "../../components/components/totalLoad";
-import { Label } from "../../components/components/ui/label";
 
 import useStoreAllFiche from "src/store/fiche/getAll";
 import Pagination from "../../components/components/ui/pagination";
@@ -72,32 +71,13 @@ export default function MessageStruct() {
         <CardHeader>
           <CardTitle className="text-sm font-semibold">
             <div className="flex items-center justify-between ">
-              <div>
-                <p className="text-lg">Nombre total de Message structuré</p>
-
-                <p className="text-2xl font-bold">
-                  1,822{" "}
-                  <span className="text-green-500 text-sm ml-1">+5.2%</span>
-                </p>
+              <div className="flex items-center gap-1">
+                <p className="text-2xl">Nombre total de Message structuré: </p>
+                <span className="text-2xl font-bold">{count}</span>
               </div>
             </div>{" "}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col  gap-4  p-2">
-          <div className="flex items-center justify-between border border-gray-200 p-1 ">
-            <p className="text-sm text-muted-foreground">
-              +140 ce dernier mois
-            </p>
-
-            <Button variant="outline" size="icon">
-              <MoreHorizontal className="w-5 h-5" />
-            </Button>
-          </div>
-
-          {/*    <Button variant="ghost" size="icon">
-              <MoreHorizontal className="w-5 h-5" />
-            </Button> */}
-        </CardContent>
       </Card>
 
       <Table className="bg-white">

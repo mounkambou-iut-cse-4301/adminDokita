@@ -52,7 +52,6 @@ import { joinUrlWithParamsId } from "src/helpers/helpers";
 
 export default function DoctorTable() {
   const [isChecked, setIsChecked] = useState(false);
-  const [isSwitched, setIsSwitched] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const [adresse, setAdresse] = useState("");

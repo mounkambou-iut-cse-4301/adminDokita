@@ -70,7 +70,7 @@ const Header = () => {
     localStorage.removeItem("user");
 
     // Redirige vers login
-    navigate("/sign-in");
+    navigate("/");
   };
 
   useEffect(() => {}, []);

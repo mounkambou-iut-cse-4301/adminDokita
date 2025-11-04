@@ -172,82 +172,90 @@ const AddFormation = () => {
         </CardHeader>
         <CardContent>
           <FormProvider {...methods}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Champs principaux */}
-              <FormField
-                control={control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom de la formation</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ECG avancé" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+              {/* 🧩 Section : Informations principales */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Nom de la formation */}
+                <FormField
+                  control={control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom de la formation</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ECG avancé" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Catégorie dropdown */}
-              <FormField
-                control={control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Catégorie</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        value={field.value ? String(field.value) : ""}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choisir une catégorie" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Categories?.map((cat: any) => (
-                            <SelectItem
-                              key={cat.categoryId}
-                              value={String(cat.categoryId)}
-                            >
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Catégorie */}
+                <FormField
+                  control={control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catégorie</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) =>
+                            field.onChange(Number(value))
+                          }
+                          value={field.value ? String(field.value) : ""}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choisir une catégorie" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Categories?.map((cat: any) => (
+                              <SelectItem
+                                key={cat.categoryId}
+                                value={String(cat.categoryId)}
+                              >
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={control}
-                name="competence"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Compétence</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Interprétation ECG" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Compétence */}
+                <FormField
+                  control={control}
+                  name="competence"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Compétence</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Interprétation ECG" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={control}
-                name="dureeHeures"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Durée (heures)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Durée */}
+                <FormField
+                  control={control}
+                  name="dureeHeures"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Durée (heures)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
+              {/* Commentaire */}
               <FormField
                 control={control}
                 name="comment"
@@ -255,79 +263,60 @@ const AddFormation = () => {
                   <FormItem>
                     <FormLabel>Commentaire</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Session pratique" {...field} />
+                      <Textarea placeholder="Session pratique..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* Gestion dynamique des leçons */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Leçons</h3>
+              {/* 🧠 Section : Leçons */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Leçons</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      append({
+                        title: "",
+                        description: "",
+                        fileUrl: null,
+                        orderIndex: fields.length + 1,
+                        categoryId: 0,
+                      })
+                    }
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une leçon
+                  </Button>
+                </div>
 
                 {fields.map((item, index) => (
                   <div
                     key={item.id}
-                    className="border p-4 rounded-lg space-y-3"
+                    className="border p-5 rounded-xl shadow-sm space-y-4 bg-white dark:bg-gray-900"
                   >
-                    <FormField
-                      control={control}
-                      name={`lessons.${index}.title`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Titre</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Introduction à l’ECG"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Titre */}
+                      <FormField
+                        control={control}
+                        name={`lessons.${index}.title`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Titre</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Introduction à l’ECG"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={control}
-                      name={`lessons.${index}.description`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Bases théoriques"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Upload fichier */}
-                    <Controller
-                      control={control}
-                      name={`lessons.${index}.fileUrl`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Fichier / Vidéo</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="file"
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.files ? e.target.files[0] : null
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
+                      {/* Ordre */}
                       <FormField
                         control={control}
                         name={`lessons.${index}.orderIndex`}
@@ -341,8 +330,49 @@ const AddFormation = () => {
                           </FormItem>
                         )}
                       />
+                    </div>
 
-                      {/* Catégorie de la leçon */}
+                    {/* Description */}
+                    <FormField
+                      control={control}
+                      name={`lessons.${index}.description`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Bases théoriques..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Fichier & Catégorie */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Controller
+                        control={control}
+                        name={`lessons.${index}.fileUrl`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Fichier / Vidéo</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="file"
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.files ? e.target.files[0] : null
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
                       <FormField
                         control={control}
                         name={`lessons.${index}.categoryId`}
@@ -380,33 +410,18 @@ const AddFormation = () => {
                     <Button
                       type="button"
                       variant="destructive"
-                      className="mt-2"
+                      size="sm"
+                      className="mt-3"
                       onClick={() => remove(index)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" /> Supprimer cette leçon
                     </Button>
                   </div>
                 ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    append({
-                      title: "",
-                      description: "",
-                      fileUrl: null,
-                      orderIndex: fields.length + 1,
-                      categoryId: 0,
-                    })
-                  }
-                >
-                  <PlusCircle className="w-4 h-4 mr-2" /> Ajouter une leçon
-                </Button>
               </div>
 
-              {/* Bouton submit */}
-              <Button type="submit" className="w-full" disabled={loading}>
+              {/* Bouton de soumission */}
+              <Button type="submit" className="w-full text-white mt-6" disabled={loading}>
                 {loading ? "Enregistrement..." : "Enregistrer la formation"}
               </Button>
             </form>

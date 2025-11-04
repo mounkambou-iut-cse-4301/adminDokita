@@ -1,90 +1,89 @@
-import React, { useRef, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../../components/components/ui/card";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
+  FormMessage,
 } from "../../components/components/ui/form";
-import { FaEllipsisV, FaEdit, FaSearch, FaTrash } from "react-icons/fa";
 import { Input } from "../../components/components/ui/input";
+import { Textarea } from "../../components/components/ui/textarea";
 import { Button } from "../../components/components/ui/button";
-import { useForm } from "react-hook-form";
-import { Dialog, Transition } from "@headlessui/react";
-import { useNavigate } from "react-router-dom";
-import { CircleAlert, PlusCircle, UploadCloud, XCircle } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../../components/components/ui/select";
+import { CircleAlert, PlusCircle } from "lucide-react";
+import useAddessaddVideo from "src/store/video/Add";
+import useStoreCategoriesVid from "src/store/categorieVideo/getAll";
+import useStoreAllUsers from "src/store/users/getAll";
 
-type FormValues = {
-  nom: string;
-  prenom: string;
-  sexe: string;
-  email: string;
-  telephone: string;
-  adresse: string;
-};
+// ✅ Validation du formulaire
+const videoSchema = z.object({
+  title: z.string().min(2, "Le titre est requis"),
+  path: z.string().url("Le lien doit être une URL valide"),
+  description: z.string().optional(),
+  categoryVideoId: z.string().min(1, "La catégorie est requise"),
+  medecinId: z.string().min(1, "Le médecin est requis"),
+});
+
+type VideoFormValues = z.infer<typeof videoSchema>;
 
 const AddVideo = () => {
-  const form = useForm<FormValues>({
+  const navigate = useNavigate();
+
+  const form = useForm<VideoFormValues>({
+    resolver: zodResolver(videoSchema),
     defaultValues: {
-      nom: "Nana Momo",
-      prenom: "Nana",
-      sexe: "Masculin",
-      email: "user-camer@gmail.com",
-      telephone: "+237 690 00 00 00",
-      adresse: "Yaoundé, Cameroun",
+      title: "",
+      path: "",
+      description: "",
+      categoryVideoId: "",
+      medecinId: "",
     },
   });
 
-  const navigate = useNavigate();
+  const { addVideo, loading } = useAddessaddVideo();
+  const { CategoriesVid, fetchCategoriesVid } = useStoreCategoriesVid();
+  const { AllUsers, fetchAllUsers } = useStoreAllUsers();
 
-  const [editMode, setEditMode] = useState(false);
+  useEffect(() => {
+    fetchCategoriesVid();
+    fetchAllUsers({ userType: "MEDECIN" });
+  }, [fetchCategoriesVid, fetchAllUsers]);
 
-  const [medicaments, setMedicaments] = useState([
-    {
-      titre: "",
-      description: "",
-      categorie: "",
-      fichier: null,
-    },
-  ]);
+  // ✅ Soumission du formulaire
+  const onSubmit = async (data: VideoFormValues) => {
+    const payload = {
+      ...data,
+      categoryVideoId: Number(data.categoryVideoId),
+      medecinId: Number(data.medecinId),
+    };
 
-  const inputRef = useRef<HTMLInputElement>(null); // ✅ Typage ici
-  const [fileName, setFileName] = useState("");
+    console.log("📦 Payload envoyé :", payload);
 
-  const handleFileChange = (e:any) => {
-    const file = e.target.files[0];
-    if (file) setFileName(file.name);
-  };
-
-  const ajouterMedicament = () => {
-    setMedicaments([
-      ...medicaments,
-      {
-        titre: "",
-        description: "",
-        categorie: "",
-        fichier: null,
-      },
-    ]);
-  };
-
-  const supprimerMedicament = (index: any) => {
-    setMedicaments(medicaments.filter((_, i) => i !== index));
+    try {
+      await addVideo(payload);
+      // ✅ Redirection après succès
+      navigate("/videos"); // <-- change le chemin selon ta route
+    } catch (error) {
+      console.error("❌ Erreur lors de l’ajout de la vidéo :", error);
+    }
   };
 
   return (
     <div className="h-screen p-4">
       <h1
         className="text-xl font-semibold mb-4 cursor-pointer"
-        onClick={() => {
-          navigate(-1);
-        }}
+        onClick={() => navigate(-1)}
       >
         ← Nouvelle vidéo
       </h1>
@@ -92,100 +91,148 @@ const AddVideo = () => {
       <div className="bg-white p-6 rounded-lg shadow-sm w-full space-y-6">
         <div className="flex justify-between items-center">
           <div className="flex gap-2 items-center">
-            <h2 className="text-lg font-semibold">Vidéo educative</h2>
+            <h2 className="text-lg font-semibold">Vidéo éducative</h2>
             <CircleAlert className="w-5 h-5 text-gray-500" />
           </div>
-          <div className="flex gap-3">
-            <button className="bg-primary rounded-full text-white px-4 py-2  hover:bg-blue-900">
-              Enregistrer
-            </button>
-            <button className="border px-4 py-2 bg-gray-200 rounded-full  hover:bg-gray-50">
-              Annuler
-            </button>
-          </div>
         </div>
 
-        <button
-          onClick={ajouterMedicament}
-          className="flex items-center gap-2  text-white bg-primary rounded-full border  px-3 py-1  "
-        >
-          <PlusCircle className="w-4 h-4" /> Ajouter une vidéo educative
-        </button>
+        {/* ✅ Formulaire */}
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 w-full"
+          >
+            {/* Titre */}
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Titre de la vidéo</FormLabel>
+                  <FormControl>
+                    <Input placeholder="ex : ECG – Episode 1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <div className="space-y-4">
-          {/* Liste des médicaments */}
-          <div className="space-y-3">
-            {medicaments.map((el, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-4 gap-4 items-center bg-blue-50 p-4 rounded"
-              >
-                <input
-                  type="text"
-                  value={el.titre}
-                  placeholder="Titre"
-                  className="col-span-1 border rounded px-2 py-1 bg-white"
-                />
-                <input
-                  type="text"
-                  value={el.description}
-                  placeholder="Description"
-                  className="col-span-1 border rounded px-2 py-1 bg-white"
-                />
-                <input
-                  type="text"
-                  value={el.categorie}
-                  placeholder="Catégorie"
-                  className="col-span-1 border rounded px-2 py-1 bg-white"
-                />
-                <div className="col-span-1 flex items-center justify-between gap-2">
-                  <div>
-                    {/* Upload container */}
-                    <div
-                      onClick={() => inputRef.current?.click()}
-                      className="flex items-center justify-center border rounded h-10 w-32 bg-white cursor-pointer hover:bg-gray-100 transition"
-                    >
-                      <UploadCloud className="w-6 h-6 text-gray-500" />
-                    </div>
-
-                    {/* Hidden input */}
-                    <input
-                      type="file"
-                      ref={inputRef}
-                      onChange={handleFileChange}
-                      className="hidden"
+            {/* Lien (path) */}
+            <FormField
+              control={form.control}
+              name="path"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lien (URL) de la vidéo</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://cdn.example.com/medias/ecg1.mp4"
+                      {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                    {/* Display file name */}
-                    {fileName && (
-                      <p className="mt-2 text-sm text-gray-600">
-                        Fichier sélectionné: <strong>{fileName}</strong>
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => supprimerMedicament(index)}
-                    className="text-red-500 hover:text-red-700"
+            {/* Description */}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Brève description de la vidéo"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Catégorie */}
+            <FormField
+              control={form.control}
+              name="categoryVideoId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Catégorie</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || ""}
                   >
-                    <XCircle className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner une catégorie" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CategoriesVid?.map((cat: any) => (
+                        <SelectItem
+                          key={cat.categoryId}
+                          value={String(cat.categoryId)}
+                        >
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Commentaire */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Commentaire
-            </label>
-            <textarea
-              defaultValue="Vous devriez bien manger avant de prendre tout médicament que ce soit, Merci"
-              className="w-full border rounded px-3 py-2 bg-white"
-              rows={3}
-            ></textarea>
-          </div>
-        </div>
+            {/* Médecin */}
+            <FormField
+              control={form.control}
+              name="medecinId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Médecin</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un médecin" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {AllUsers?.map((med: any) => (
+                        <SelectItem key={med.userId} value={String(med.userId)}>
+                          {med.lastName} {med.firstName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Boutons */}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate(-1)}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-primary text-white"
+              >
+                {loading ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );

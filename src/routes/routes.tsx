@@ -27,6 +27,8 @@ import Video from "src/pages/videoEduc";
 import AddVideo from "src/pages/videoEduc/add";
 import AddCategorie from "src/pages/categorie/add";
 import Categorie from "src/pages/categorie";
+import CategorieVideo from "src/pages/categoriVideo";
+import AddCategorieVideo from "src/pages/categoriVideo/add";
 
 interface RouteType {
   path: string;
@@ -37,12 +39,19 @@ interface RouteType {
 const routes: RouteType[] = [
   {
     path: "/",
+    element: <SignInLayout />,
+
+    children: [{ path: "/", element: <SignIn /> }],
+  },
+
+  {
+    path: "/home",
     element: (
       <ProtectedRoute>
         <MainLayout />
       </ProtectedRoute>
     ),
-    children: [{ path: "/", element: <Home /> }],
+    children: [{ path: "/home", element: <Home /> }],
   },
 
   {
@@ -196,6 +205,26 @@ const routes: RouteType[] = [
   },
 
   {
+    path: "/categorie_video",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/categorie_video", element: <CategorieVideo /> }],
+  },
+
+  {
+    path: "/add_categorieVideo",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/add_categorieVideo", element: <AddCategorieVideo /> }],
+  },
+
+  {
     path: "/ajouter_video",
     element: (
       <ProtectedRoute>
@@ -228,12 +257,6 @@ const routes: RouteType[] = [
   {
     path: "/",
     element: <SignInLayout />,
-    children: [{ path: "/sign-in", element: <SignIn /> }],
-  },
-
-  {
-    path: "/",
-    element: <SignInLayout />,
     children: [{ path: "/onboard", element: <OnBoardingScreen /> }],
   },
 
@@ -241,13 +264,3 @@ const routes: RouteType[] = [
 ];
 
 export default routes;
-
-
-
-
-
-
-
-
-
-
