@@ -1,14 +1,14 @@
 import config from "src/config/config.dev";
 import { create } from "zustand";
 
-interface OrdonancesFormState {
+interface MedicamantsFormState {
   submitForm: (input: any) => Promise<void>;
   response: any | null;
   loading: boolean;
   error: string;
 }
 
-const useOrdonancesFormStore = create<OrdonancesFormState>((set) => ({
+const useMedicamantsFormStore = create<MedicamantsFormState>((set) => ({
   response: null,
   loading: false,
   error: "",
@@ -19,14 +19,17 @@ const useOrdonancesFormStore = create<OrdonancesFormState>((set) => ({
     set({ loading: true });
 
     try {
-      const response = await fetch(`${config.mintClient}protocoles-ordonance`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json", // ✅ On envoie du JSON ici
-        },
-        body: JSON.stringify(input),
-      });
+      const response = await fetch(
+        `${config.mintClient}protocoles-ordonance/medicaments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json", // ✅ On envoie du JSON ici
+          },
+          body: JSON.stringify(input),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -43,4 +46,4 @@ const useOrdonancesFormStore = create<OrdonancesFormState>((set) => ({
   },
 }));
 
-export default useOrdonancesFormStore;
+export default useMedicamantsFormStore;

@@ -121,16 +121,26 @@ const Header = () => {
           </div>
 
           <span className="font-medium">
-            {savedState?.firstName} {savedState?.lastName} 
+            {savedState?.firstName} {savedState?.lastName}
           </span>
 
           <Popover>
-            <PopoverTrigger className="bg-inherit text-left px-4 py-1 text-sm  border-0 rounded-md hover:bg-gray-100">
-              <img
-                src="/docta.png"
-                alt="Avatar"
-                className="w-10 h-10 rounded-full cursor-pointer"
-              />
+            <PopoverTrigger className="bg-inherit text-left px-4 py-1 text-sm border-0 rounded-md hover:bg-gray-100">
+              {savedState?.profile ? (
+                <img
+                  src={savedState.profile}
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-full cursor-pointer object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold cursor-pointer">
+                  {savedState?.firstName && savedState?.lastName
+                    ? `${savedState.firstName[0]?.toUpperCase() || ""}${
+                        savedState.lastName[0]?.toUpperCase() || ""
+                      }`
+                    : "?"}
+                </div>
+              )}
             </PopoverTrigger>
 
             <PopoverContent className="w-full">

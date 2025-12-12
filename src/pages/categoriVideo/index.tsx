@@ -237,6 +237,8 @@ export default function CategorieVideo() {
             <TableHead>Nom de Catégories</TableHead>
             <TableHead>description</TableHead>
             <TableHead>Date de creation</TableHead>
+            <TableHead>Lien</TableHead>
+
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -263,6 +265,17 @@ export default function CategorieVideo() {
               <TableCell>
                 {" "}
                 {dayjs(a.createdAt).format("DD/MM/YYYY HH:mm")}
+              </TableCell>
+
+              <TableCell>
+                <a
+                  href={a.coverImage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:text-blue-700"
+                >
+                  Voir le lien
+                </a>
               </TableCell>
 
               <TableCell onClick={(e) => e.stopPropagation()}>
