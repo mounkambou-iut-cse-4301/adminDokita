@@ -15,6 +15,9 @@ interface Medicament {
   voie: string;
   posologie: string;
   comment: string;
+
+  nameCommercial: string;
+  nameLabo: string;
 }
 
 interface FormValues {
@@ -35,6 +38,9 @@ const AddMedicament = () => {
         voie: "",
         posologie: "",
         comment: "",
+
+        nameCommercial: "",
+        nameLabo: "",
       },
     },
   });
@@ -74,6 +80,22 @@ const AddMedicament = () => {
         <div className="space-y-2">
           <Label>Nom</Label>
           <Input placeholder="Nom" {...register("medicament.name")} />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Nom Commercial</Label>
+          <Input
+            placeholder="Nom commercial"
+            {...register("medicament.nameCommercial")}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Nom Laboratoire</Label>
+          <Input
+            placeholder="Nom laboratoire"
+            {...register("medicament.nameLabo")}
+          />
         </div>
 
         <div className="space-y-2">

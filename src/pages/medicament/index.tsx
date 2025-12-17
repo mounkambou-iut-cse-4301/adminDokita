@@ -267,6 +267,8 @@ export default function Medicament() {
           <TableRow>
             <TableHead></TableHead>
             <TableHead>Nom</TableHead>
+            <TableHead>Nom Commercial</TableHead>
+            <TableHead>Nom Laboratoire</TableHead>
             <TableHead>Dosage</TableHead>
             <TableHead>Forme</TableHead>
             <TableHead>Voie</TableHead>
@@ -286,8 +288,11 @@ export default function Medicament() {
                   onChange={(e) => setIsChecked(e.target.checked)}
                 />
               </TableCell>
-
               <TableCell className="font-semibold">{a.name}</TableCell>
+              <TableCell className="font-semibold">
+                {a.nameCommercial}
+              </TableCell>
+              <TableCell className="font-semibold">{a.nameLabo}</TableCell>
               <TableCell>{a.dosage}</TableCell>
               <TableCell>{a.forme}</TableCell>
               <TableCell>{a.voie}</TableCell>
