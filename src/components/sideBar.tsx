@@ -84,13 +84,24 @@ const SideBar = () => {
       subItems: [],
     },
 
-    {
+    /*    {
       name: "Ordonnance",
       pathname: "/ordonnance",
       icon: <FaPrescriptionBottleAlt />,
       subItems: [
         { name: t("Médicament"), pathname: "/ordonnance", icon: <FaPills /> },
         { name: t("Maladie"), pathname: "/listRole", icon: <FaVirus /> },
+      ],
+    }, */
+
+    {
+      name: "Ordonnance",
+      pathname: "/ordonnance",
+      icon: <FaPrescriptionBottleAlt />,
+      subItems: [
+        { name: t("Protocole"), pathname: "/ordonnance", icon: <FaVirus /> },
+
+        { name: t("Medicament"), pathname: "/medicamant", icon: <FaPills /> },
       ],
     },
 

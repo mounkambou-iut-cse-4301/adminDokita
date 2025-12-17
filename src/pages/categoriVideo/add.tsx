@@ -15,8 +15,8 @@ import {
 } from "../../components/components/ui/form";
 import { Input } from "../../components/components/ui/input";
 import { Button } from "../../components/components/ui/button";
-import { Textarea } from "../../components/components/ui/textarea"; // si tu veux pour description
-import { CircleAlert, PlusCircle } from "lucide-react";
+import { Textarea } from "../../components/components/ui/textarea";
+import { CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../components/hooks/use-toast";
@@ -25,6 +25,7 @@ import useAddessaddCategorieVidstore from "src/store/categorieVideo/Add";
 type FormValues = {
   name: string;
   description: string;
+  coverImage: string; // <-- ajouté
 };
 
 const AddCategorieVideo = () => {
@@ -32,6 +33,7 @@ const AddCategorieVideo = () => {
     defaultValues: {
       name: "",
       description: "",
+      coverImage: "", // <-- ajouté
     },
   });
 
@@ -44,11 +46,12 @@ const AddCategorieVideo = () => {
       await addCategoryVideo({
         name: data.name,
         description: data.description,
+        coverImage: data.coverImage, // <-- ajouté
       });
 
       toast({
-        title: "Ajout catégorie réussie",
-        description: "Votre catégorie a été ajoutée 🚀",
+        title: "Catégorie ajoutée",
+        description: "Votre catégorie a bien été créée 🚀",
       });
 
       navigate("/categorie_video");
@@ -66,9 +69,7 @@ const AddCategorieVideo = () => {
     <div className="h-screen p-4">
       <h1
         className="text-xl font-semibold mb-4 cursor-pointer"
-        onClick={() => {
-          navigate(-1);
-        }}
+        onClick={() => navigate(-1)}
       >
         ← Nouvelle Catégorie
       </h1>
@@ -117,6 +118,24 @@ const AddCategorieVideo = () => {
                 )}
               />
 
+              {/* Cover Image */}
+              <FormField
+                control={form.control}
+                name="coverImage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image de couverture (URL)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://exemple.com/image.jpg"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Actions */}
               <div className="flex justify-end gap-3">
                 <Button
@@ -126,7 +145,7 @@ const AddCategorieVideo = () => {
                 >
                   Annuler
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" className="text-white" disabled={loading}>
                   {loading ? "Enregistrement..." : "Enregistrer"}
                 </Button>
               </div>

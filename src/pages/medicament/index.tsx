@@ -52,7 +52,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/components/ui/select";
-import useStoreAllOrdonnances from "src/store/ordonnance/getAll";
 import Pagination from "../../components/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import {
@@ -66,12 +65,13 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "../../components/lib/utils";
 import DetailOrdonnance from "./detailMessageStruct";
+import useStoreAllMedicamants from "src/store/medicamant/getAll";
 
 type FilterFormValues = {
   createdAt?: Date;
 };
 
-export default function Ordannance() {
+export default function Medicament() {
   const form = useForm<FilterFormValues>({
     defaultValues: { createdAt: undefined },
   });
@@ -87,8 +87,8 @@ export default function Ordannance() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
-  const { AllOrdonnances, loadingAllOrdonnances, fetchAllOrdonnances, count } =
-    useStoreAllOrdonnances();
+  const { AllMedicamants, loadingAllMedicamants, fetchAllMedicamants, count } =
+    useStoreAllMedicamants();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -101,13 +101,13 @@ export default function Ordannance() {
   }, [search]);
 
   useEffect(() => {
-    fetchAllOrdonnances({ page, limit: 5, q: debouncedSearch });
-  }, [page, debouncedSearch, fetchAllOrdonnances]);
+    fetchAllMedicamants({ page, limit: 5, q: debouncedSearch });
+  }, [page, debouncedSearch, fetchAllMedicamants]);
 
-  if (loadingAllOrdonnances) {
+  if (loadingAllMedicamants) {
     return <TotalLoad />;
   }
-  console.log("AllOrdonnances", AllOrdonnances);
+  console.log("AllMedicamants", AllMedicamants);
 
   return (
     <div className="flex flex-col p-4 h-full">
@@ -115,10 +115,10 @@ export default function Ordannance() {
         <div
           className="flex gap-2 items-center bg-primary p-2 rounded-full my-3 cursor-pointer  text-white"
           onClick={() => {
-            navigate("/ajouter_ordonnance");
+            navigate("/ajouter_medicamant");
           }}
         >
-          <PlusCircle className="w-4 h-4" /> Ajouter une ordonnance
+          <PlusCircle className="w-4 h-4" /> Ajouter un medicamant
         </div>
       </div>
 
@@ -127,9 +127,9 @@ export default function Ordannance() {
           <CardTitle className="text-sm font-semibold">
             <div className="flex items-center justify-between ">
               <div>
-                <p className="text-lg">Nombre total d'ordonnances</p>
+                <p className="text-lg">Nombre total médicament</p>
 
-                <p className="text-2xl font-bold">{AllOrdonnances?.length}</p>
+                <p className="text-2xl font-bold">{AllMedicamants?.length}</p>
               </div>
             </div>{" "}
           </CardTitle>
@@ -163,7 +163,7 @@ export default function Ordannance() {
           <FaSearch className="absolute top-3 left-3 text-gray-400" />
 
           <Popover>
-            <PopoverTrigger className="flex bg-gray-100 text-left px-4 py-1 text-sm border rounded-md hover:bg-gray-100 gap-1">
+            {/*   <PopoverTrigger className="flex bg-gray-100 text-left px-4 py-1 text-sm border rounded-md hover:bg-gray-100 gap-1">
               <img
                 src="/iconFil.svg"
                 // alt="Avatar"
@@ -171,7 +171,7 @@ export default function Ordannance() {
               />{" "}
               <span>date création</span>
               <ChevronDown className="w-5 h-5 text-gray-600" />
-            </PopoverTrigger>
+            </PopoverTrigger> */}
             <PopoverContent className="w-64">
               <div className="p-4 space-y-4">
                 <Form {...form}>
@@ -181,7 +181,7 @@ export default function Ordannance() {
                       e.preventDefault();
                       // 👉 Quand on clique sur "Réinitialiser"
                       form.reset(); // vide la date
-                      fetchAllOrdonnances({
+                      fetchAllMedicamants({
                         page: 1,
                         limit: 6,
                         q: debouncedSearch,
@@ -232,7 +232,7 @@ export default function Ordannance() {
                                     ? date.toISOString().split("T")[0]
                                     : undefined;
 
-                                  fetchAllOrdonnances({
+                                  fetchAllMedicamants({
                                     page: 1,
                                     limit: 6,
                                     q: debouncedSearch,
@@ -252,37 +252,34 @@ export default function Ordannance() {
             </PopoverContent>
           </Popover>
         </div>{" "}
-        <button
+        {/*      <button
           className="rounded-full text-white bg-primary"
           onClick={() => {
-            fetchAllOrdonnances({ page, limit: 6, q: debouncedSearch });
+            fetchAllMedicamants({ page, limit: 6, q: debouncedSearch });
           }}
         >
           Annuler filtre
-        </button>
+        </button> */}
       </div>
 
       <Table className="bg-white">
         <TableHeader>
           <TableRow>
-            <TableHead>
-              <CustomCheckbox
-                label=""
-                checked={isChecked}
-                onChange={(e) => setIsChecked(e.target.checked)}
-              />
-            </TableHead>
-            <TableHead>Nom de l’ordonnance</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Médicaments</TableHead>
-            <TableHead>Voies d'administration</TableHead>
-            <TableHead>Durée du traitement</TableHead>
+            <TableHead></TableHead>
+            <TableHead>Nom</TableHead>
+            <TableHead>Nom Commercial</TableHead>
+            <TableHead>Nom Laboratoire</TableHead>
+            <TableHead>Dosage</TableHead>
+            <TableHead>Forme</TableHead>
+            <TableHead>Voie</TableHead>
+            <TableHead>Posologie</TableHead>
+            <TableHead>Commentaire</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {AllOrdonnances?.map((a, i) => (
+          {AllMedicamants?.map((a, i) => (
             <TableRow key={i}>
               <TableCell>
                 <CustomCheckbox
@@ -291,69 +288,42 @@ export default function Ordannance() {
                   onChange={(e) => setIsChecked(e.target.checked)}
                 />
               </TableCell>
-
-              {/* Nom de l’ordonnance */}
               <TableCell className="font-semibold">{a.name}</TableCell>
-
-              {/* Société pharmaceutique — (pas dans tes données, on peut mettre N/A) */}
-
-              {/* Description */}
-              <TableCell>{a.description}</TableCell>
-
-              {/* Médicaments */}
-              <TableCell>
-                <div className="flex flex-col">
-                  {a.traitement?.map((t: any, index: number) => (
-                    <span key={index} className="text-sm text-gray-700">
-                      • {t.name} ({t.forme}, {t.dosage})
-                    </span>
-                  ))}
-                </div>
+              <TableCell className="font-semibold">
+                {a.nameCommercial}
               </TableCell>
-
-              {/* Voies d'administration */}
-              <TableCell>
-                {Array.from(
-                  new Set(a.traitement?.map((t: any) => t.voie))
-                ).join(", ")}
-              </TableCell>
-
-              {/* Durée du traitement (exemple : afficher la durée du premier médicament) */}
-              <TableCell>{a.traitement?.[0]?.duree || "—"}</TableCell>
+              <TableCell className="font-semibold">{a.nameLabo}</TableCell>
+              <TableCell>{a.dosage}</TableCell>
+              <TableCell>{a.forme}</TableCell>
+              <TableCell>{a.voie}</TableCell>
+              <TableCell>{a.posologie}</TableCell>
+              <TableCell>{a.comment}</TableCell>
 
               {/* Actions */}
-              <TableCell onClick={(e) => e.stopPropagation()}>
+              <TableCell>
                 <Popover>
-                  <PopoverTrigger className="bg-gray-200 text-left px-4 py-1 text-sm border rounded-md hover:bg-gray-100">
+                  <PopoverTrigger className="bg-gray-200 px-4 py-1 rounded-md">
                     <MoreHorizontal className="w-4 h-4" />
                   </PopoverTrigger>
                   <PopoverContent className="p-4 w-full">
                     <ul className="space-y-2 cursor-pointer">
                       <li
-                        className="flex items-center gap-2 p-2 border-b last:border-none"
-                        onClick={(event) => {
-                          event.stopPropagation();
+                        className="flex items-center gap-2 p-2 border-b"
+                        onClick={() => {
                           setDetailCard(true);
-                          setIdcartes(a.protocoleId);
+                          setIdcartes(a.medicamentId);
                         }}
                       >
-                        <FaEdit className="text-gray-600 text-lg cursor-pointer" />
-                        <span className="font-medium text-gray-500 text-sm hover:text-gray-600">
-                          Détail
-                        </span>
+                        <FaEdit className="text-gray-600" />
+                        <span>Détail</span>
                       </li>
 
                       <li
-                        className="flex items-center gap-2 p-2 border-b last:border-none"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setIsOpen(true);
-                        }}
+                        className="flex items-center gap-2 p-2"
+                        onClick={() => setIsOpen(true)}
                       >
-                        <FaTrash className="text-red-600 text-lg cursor-pointer" />
-                        <span className="font-medium text-red-500 text-sm hover:text-red-600">
-                          Supprimer
-                        </span>
+                        <FaTrash className="text-red-600" />
+                        <span className="text-red-600">Supprimer</span>
                       </li>
                     </ul>
                   </PopoverContent>

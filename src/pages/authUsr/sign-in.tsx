@@ -114,21 +114,28 @@ const SignIn = () => {
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem className="w-100">
-                    <Label htmlFor="phone">Téléphone</Label>
-                    <FormControl className="w-full">
-                      <div className="flex w-full">
-                        {/* Préfixe fixe */}
-                        <span className="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md">
+                  <FormItem>
+                    <Label
+                      htmlFor="phone"
+                      className="text-gray-800 font-semibold"
+                    >
+                      Téléphone
+                    </Label>
+                    <FormControl>
+                      <div className="relative mt-1">
+                        <span className="absolute inset-y-0 left-0 flex items-center  pl-3 text-[#1B324F] font-semibold pointer-events-none">
                           +237
                         </span>
-                        {/* Input prend tout le reste */}
+
                         <Input
                           id="phone"
                           type="tel"
-                          placeholder="699123456"
+                          placeholder="699 12 34 56"
                           {...field}
-                          className="flex-1 min-w-0 rounded-l-none bg-white"
+                          className="pl-16 pr-4 py-2 w-full bg-white border border-[#1B324F]/30
+                   focus:ring-2 focus:ring-[#1B324F] focus:border-[#1B324F]
+                   text-gray-900 placeholder-gray-400 rounded-lg shadow-sm
+                   transition-all duration-200"
                         />
                       </div>
                     </FormControl>

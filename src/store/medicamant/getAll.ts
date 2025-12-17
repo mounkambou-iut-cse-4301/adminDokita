@@ -1,4 +1,4 @@
-// src/store/useStoreAllOrdonnances.ts
+// src/store/useStoreAllMedicamants.ts
 import { create } from "zustand";
 import axios from "axios";
 import config from "src/config/config.dev";
@@ -13,26 +13,26 @@ interface UserFilters {
   createdAt?: string; // ISO ou format attendu par ton backend
 }
 
-interface AllOrdonnancesState {
-  AllOrdonnances: any[];
+interface AllMedicamantsState {
+  AllMedicamants: any[];
   count: number;
-  loadingAllOrdonnances: boolean;
-  fetchAllOrdonnances: (filters?: UserFilters) => Promise<void>;
+  loadingAllMedicamants: boolean;
+  fetchAllMedicamants: (filters?: UserFilters) => Promise<void>;
 }
 
-const useStoreAllOrdonnances = create<AllOrdonnancesState>((set, get) => ({
-  AllOrdonnances: [],
-  loadingAllOrdonnances: false,
+const useStoreAllMedicamants = create<AllMedicamantsState>((set, get) => ({
+  AllMedicamants: [],
+  loadingAllMedicamants: false,
   count: 0,
 
-  fetchAllOrdonnances: async (filters?: UserFilters) => {
+  fetchAllMedicamants: async (filters?: UserFilters) => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No token available. User might not be authenticated.");
       return;
     }
 
-    set({ loadingAllOrdonnances: true });
+    set({ loadingAllMedicamants: true });
 
     const params = new URLSearchParams();
     if (filters) {
@@ -48,22 +48,24 @@ const useStoreAllOrdonnances = create<AllOrdonnancesState>((set, get) => ({
 
     try {
       const response = await axios.get(
-        `${config.mintClient}protocoles-ordonance/?${params.toString()}`,
+        `${
+          config.mintClient
+        }protocoles-ordonance/medicaments/?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       console.log("response", response.data);
       set({
-        AllOrdonnances: response.data.items,
+        AllMedicamants: response.data.items,
         count: response.data.meta.total,
-        loadingAllOrdonnances: false,
+        loadingAllMedicamants: false,
       });
     } catch (error) {
-      console.error("Error fetching AllOrdonnances:", error);
-      set({ loadingAllOrdonnances: false });
+      console.error("Error fetching AllMedicamants:", error);
+      set({ loadingAllMedicamants: false });
     }
   },
 }));
 
-export default useStoreAllOrdonnances;
+export default useStoreAllMedicamants;
