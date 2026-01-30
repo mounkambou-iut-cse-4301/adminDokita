@@ -19,15 +19,14 @@ import {
   FaDotCircle,
 } from "react-icons/fa";
 import { useTranslation } from "../hooks/useTranslation";
-import { useAuthStore } from "src/store/authStore";
 import { useThemeStore } from "src/store/themeStore";
+import { GraduationCap } from "lucide-react";
 
 const SideBar = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
-  const user = useAuthStore((state) => state.user);
   const { theme } = useThemeStore();
 
   useEffect(() => {
@@ -65,6 +64,14 @@ const SideBar = () => {
       icon: <FaUserMd />,
       subItems: [],
     },
+
+     {
+      name: "Specialite",
+      pathname: "/specialite",
+      icon: <GraduationCap  />,
+      subItems: [],
+    },
+
     {
       name: "Abonnements",
       pathname: "/abonnement",

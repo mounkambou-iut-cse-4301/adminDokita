@@ -31,6 +31,8 @@ import CategorieVideo from "src/pages/categoriVideo";
 import AddCategorieVideo from "src/pages/categoriVideo/add";
 import Medicament from "src/pages/medicament";
 import AddMedicament from "src/pages/medicament/add";
+import AddSpecialite from "src/pages/specialite/add";
+import Specialite from "src/pages/specialite";
 
 interface RouteType {
   path: string;
@@ -164,6 +166,26 @@ const routes: RouteType[] = [
       </ProtectedRoute>
     ),
     children: [{ path: "/categorie", element: <Categorie /> }],
+  },
+
+  {
+    path: "/add_specialite",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/add_specialite", element: <AddSpecialite /> }],
+  },
+
+  {
+    path: "/specialite",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/specialite", element: <Specialite /> }],
   },
 
   {

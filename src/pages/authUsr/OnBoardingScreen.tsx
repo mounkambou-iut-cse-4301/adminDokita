@@ -64,7 +64,7 @@ const OnBoardingScreen = () => {
             className="h-[40px] w-[60px] md:h-[50px] md:w-[75px] cursor-pointer"
           />
           <div className="text-3xl  mb-4 md:text-2xl mt-1 md:mt-2 md:ml-4">
-            <h3>PSE Task Manager</h3>
+            <h3>Dokita</h3>
           </div>
         </div>
         <div className=" text-center m-20 mb-[30px]">

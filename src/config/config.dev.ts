@@ -1,7 +1,19 @@
+const devFallback = "http://localhost:3004";
+//const prodFallback = "https://api.dokiita.com";
+const prodFallback = "https://alphad.collexios.com";
+
+const rawBase =
+  import.meta?.env?.VITE_API_BASE_URL ||
+  (import.meta?.env?.PROD ? devFallback : prodFallback);
+
+const normalizedBase = (
+  import.meta?.env?.PROD ? rawBase.replace(/^http:\/\//, "https://") : rawBase
+)
+  .replace(/\/$/, "")
+  .concat("/");
+
 const config: any = {
-  //mintClient: "http://18.189.88.86:8077/v1/",
-  //  mintClient: "http://localhost:8005/v1/",
-  mintClient: "https://api.dokiita.com/",
+  mintClient: normalizedBase,
 };
 
 export default config;
