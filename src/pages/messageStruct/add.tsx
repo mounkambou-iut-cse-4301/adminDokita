@@ -79,8 +79,8 @@ export default function PaludismeAnamneseBuilder() {
                 type: formType,
                 options: formType === "SELECT" ? formOptions : [],
               }
-            : p
-        )
+            : p,
+        ),
       );
     } else {
       const newQ: Question = {
@@ -109,7 +109,7 @@ export default function PaludismeAnamneseBuilder() {
 
   const updateOption = (id: string, key: "label" | "value", value: string) => {
     setFormOptions((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, [key]: value } : o))
+      prev.map((o) => (o.id === id ? { ...o, [key]: value } : o)),
     );
   };
 
@@ -261,7 +261,7 @@ export default function PaludismeAnamneseBuilder() {
 
         {/* 🪟 Popup pour ajouter/modifier une question */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-4xl w-[90vw] max-h-[85vh]">
             <DialogHeader>
               <DialogTitle className="bg-white">
                 {editingQuestion
@@ -320,14 +320,14 @@ export default function PaludismeAnamneseBuilder() {
                           }
                           placeholder="Label (ex: Un jour)"
                         />
-                        <Input
+                        {/*  <Input
                           value={opt.value}
                           onChange={(e) =>
                             updateOption(opt.id, "value", e.target.value)
                           }
                           placeholder="Value (ex: 1_jour)"
                           className="w-40"
-                        />
+                        /> */}
                         <Button
                           variant="ghost"
                           onClick={() => removeOption(opt.id)}

@@ -16,7 +16,6 @@ import DetailDoctor from "src/pages/docteur/detailDocteur";
 import Abonnement from "src/pages/abonnement";
 import RendezVous from "src/pages/rendezvous";
 import Transaction from "src/pages/transaction";
-import MessageStruct from "src/pages/messageStruct";
 import AddMessage from "src/pages/messageStruct/add";
 import Synchro from "src/pages/synchronisation";
 import FormationCont from "src/pages/formationConti";
@@ -33,6 +32,7 @@ import Medicament from "src/pages/medicament";
 import AddMedicament from "src/pages/medicament/add";
 import AddSpecialite from "src/pages/specialite/add";
 import Specialite from "src/pages/specialite";
+import MessageStruct from "src/pages/messageStruct";
 
 interface RouteType {
   path: string;
