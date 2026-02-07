@@ -1,92 +1,115 @@
 "use client";
 
-import { useState } from "react";
-
 import { Badge } from "../../components/components/ui/badge";
-import { Download, Eye, Trash2 } from "lucide-react";
 
-export default function DetailMessage() {
-  const documents = [
-    { name: "Brief" },
-    { name: "Documentation" },
-    { name: "Cahier de charge" },
-  ];
+type FicheOption = {
+  label: string;
+  value: string;
+};
+
+type FicheQuestion = {
+  id: string;
+  type: string;
+  label: string;
+  order: number;
+  options?: FicheOption[];
+};
+
+type FicheDetail = {
+  ficheId: number;
+  title: string;
+  description: string;
+  createdBy: number;
+  isActive: boolean;
+  questions?: FicheQuestion[];
+  responses?: any[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+interface DetailMessageProps {
+  ficheDetail: FicheDetail | null;
+  loading?: boolean;
+}
+
+export default function DetailMessage({
+  ficheDetail,
+  loading = false,
+}: DetailMessageProps) {
+  if (loading) {
+    return <p className="text-sm text-gray-500">Chargement des details...</p>;
+  }
+
+  if (!ficheDetail) {
+    return <p className="text-sm text-gray-500">Aucun detail disponible.</p>;
+  }
+
+  const createdDate = new Date(ficheDetail.createdAt).toLocaleString("fr-FR");
+  const updatedDate = new Date(ficheDetail.updatedAt).toLocaleString("fr-FR");
 
   return (
-    <>
-      Détails de message structuré
-      {/* Détails du Médecin */}
-      <div className="space-y-1">
-        <h4 className="font-medium text-gray-700">Détails du Médecin</h4>
-        <div className="grid grid-cols-2 text-sm gap-4 border p-4 rounded-md bg-gray-50">
-          <Info label="Nom" value="Nana Momo" />
-          <Info label="Spécialisation" value="Cardiologist" />
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Details du message structure</h3>
+
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <Info
+          label="Titre"
+          value={ficheDetail.title?.trim() || `Fiche #${ficheDetail.ficheId}`}
+        />
+        <Info label="Description" value={ficheDetail.description || "-"} />
+        <Info label="Cree par" value={String(ficheDetail.createdBy)} />
+        <div>
+          <div className="text-xs text-gray-500">Statut</div>
+          <Badge
+            className={
+              ficheDetail.isActive
+                ? "text-green-600 border-green-500"
+                : "text-red-600 border-red-500"
+            }
+          >
+            {ficheDetail.isActive ? "Actif" : "Inactif"}
+          </Badge>
         </div>
+        <Info label="Date creation" value={createdDate} />
+        <Info label="Date mise a jour" value={updatedDate} />
       </div>
-      {/* Détails de message structuré */}
-      <div className="space-y-1">
-        <h4 className="font-medium text-gray-700 mt-4">
-          Détails de message structuré
-        </h4>
-        <div className="grid grid-cols-2 text-sm gap-4">
-          <div>
-            <div className="text-xs text-gray-500">Statut</div>
-            <Badge
-              //  variant="outline"
-              className="text-green-600 border-green-500"
-            >
-              Active
-            </Badge>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">Date d'expiration</div>
-            <span className="text-orange-500 font-medium">15/10/2026</span>
-          </div>
-        </div>
-        <div className="mt-3 text-sm text-gray-700 leading-snug space-y-2">
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua.
-          </p>
-          <p>
-            Duis aute irure dolor in reprehenderit in voluptate velit esse
-            cillum dolore eu fugiat nulla pariatur.
-          </p>
-          <p>
-            <span className="text-xs text-gray-500">Durée</span>{" "}
-            <span className="font-medium">1 mois</span>
-          </p>
-        </div>
-      </div>
-      {/* Paiement */}
-      <div className="space-y-1">
-        <h4 className="font-medium text-gray-700 mt-4">Paiement</h4>
-        <div className="grid grid-cols-2 text-sm gap-4">
-          <Info label="Mode de paiement" value="Orange Money" />
-          <Info label="Plan" value="19000 FCFA" />
-          <Info label="Autre" value="Lorem ipsum" />
-        </div>
-      </div>
-      {/* Documents associés */}
-      <div className="space-y-2 mt-4">
-        <h4 className="font-medium text-gray-700">Documents associés</h4>
-        <div className="space-y-2">
-          {documents.map((doc, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between bg-gray-50 border rounded-md px-4 py-2 text-sm"
-            >
-              <span className="font-medium">{doc.name}</span>
-              <div className="flex gap-2 text-gray-600">
-                <Eye className="w-4 h-4 cursor-pointer hover:text-blue-600" />
-                <Download className="w-4 h-4 cursor-pointer hover:text-blue-600" />
-                <Trash2 className="w-4 h-4 cursor-pointer hover:text-red-500" />
-              </div>
+
+      <div className="space-y-2">
+        <h4 className="font-medium text-gray-700">Questions</h4>
+        {!ficheDetail.questions?.length && (
+          <p className="text-sm text-gray-500">Aucune question.</p>
+        )}
+
+        {ficheDetail.questions?.map((question) => (
+          <div
+            key={question.id}
+            className="border rounded-md p-3 space-y-2 bg-gray-50"
+          >
+            <div className="flex items-center justify-between">
+              <p className="font-medium">{question.label}</p>
+              <span className="text-xs text-gray-500">
+                {question.type} - ordre {question.order}
+              </span>
             </div>
-          ))}
-        </div>
+
+            {question.type === "SELECT" && (
+              <ul className="list-disc pl-5 text-sm text-gray-600">
+                {question.options?.map((option, idx) => (
+                  <li key={`${question.id}-${idx}`}>
+                    {option.label} ({option.value})
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
       </div>
-    </>
+
+      <Info
+        label="Nombre de reponses"
+        value={String(ficheDetail.responses?.length || 0)}
+      />
+    </div>
   );
 }
 

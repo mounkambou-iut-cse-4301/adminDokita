@@ -51,7 +51,7 @@ const TMModal: React.FC<ModalProps> = ({
       case "lg":
         return "max-w-4xl";
       case "full":
-        return "max-w-full";
+        return "max-w-[60vw] w-[80vw]";
       default:
         return "max-w-2xl";
     }
@@ -85,7 +85,11 @@ const TMModal: React.FC<ModalProps> = ({
   return (
     <>
       {showModal && (
-        <div className="fixed z-10 inset-6 overflow-hidden rounded-md overflow-y-auto mt-20">
+        <div
+          className={`fixed z-10 overflow-hidden rounded-md overflow-y-auto ${
+            size === "full" ? "inset-2 mt-4" : "inset-6 mt-20"
+          }`}
+        >
           <div
             className={`flex ${getModalPositionClass()}   mr-4 text-center`}
             onClick={!closeButton ? handleClose : undefined}>
