@@ -59,6 +59,7 @@ import useStoreOneUser from "src/store/users/getOne";
 import { useToast } from "../../components/hooks/use-toast";
 import TotalLoad from "../../components/components/totalLoad";
 import useStoreUpdateUserDoc from "src/store/users/updateDoc";
+import useStoreVerifyUser from "src/store/users/verify";
 
 type FormValues = {
   firstName: string;
@@ -118,7 +119,9 @@ const DetailDoctor = () => {
   const { id } = useParams();
   const { OneUser, fetchOneUser, loadingOneUser } = useStoreOneUser();
   const { updateUsersDoc } = useStoreUpdateUserDoc();
+  const { verifyUser } = useStoreVerifyUser();
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -176,6 +179,27 @@ const DetailDoctor = () => {
     }
   };
 
+  const handleVerifyUser = async () => {
+    if (!id) return;
+    try {
+      setVerifying(true);
+      await verifyUser(id);
+      await fetchOneUser(id);
+      toast({
+        title: "Verification reussie",
+        description: "L'utilisateur a ete verifie.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Verification echouee.",
+      });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -193,35 +217,48 @@ const DetailDoctor = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Informations générales</CardTitle>
 
-          {!editMode ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditMode(true)}
-            >
-              <FaEdit className="mr-2" /> Modifier les informations
-            </Button>
-          ) : (
-            <div className="flex gap-2">
+          <div className="flex gap-2">
+            {!OneUser?.isVerified && (
               <Button
-                className="rounded-full text-white"
-                disabled={loading}
-                onClick={form.handleSubmit(onSubmit)}
-              >
-                {loading ? "Enregistrement..." : "Enregistrer"}
-              </Button>
-              <Button
-                className="rounded-full"
                 variant="outline"
-                onClick={() => {
-                  setEditMode(false);
-                  form.reset(); // on remet les valeurs initiales si on annule
-                }}
+                size="sm"
+                disabled={verifying || !id}
+                onClick={handleVerifyUser}
               >
-                Annuler
+                {verifying ? "Verification..." : "Verifier l'utilisateur"}
               </Button>
-            </div>
-          )}
+            )}
+
+            {!editMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditMode(true)}
+              >
+                <FaEdit className="mr-2" /> Modifier les informations
+              </Button>
+            ) : (
+              <>
+                <Button
+                  className="rounded-full text-white"
+                  disabled={loading}
+                  onClick={form.handleSubmit(onSubmit)}
+                >
+                  {loading ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+                <Button
+                  className="rounded-full"
+                  variant="outline"
+                  onClick={() => {
+                    setEditMode(false);
+                    form.reset(); // on remet les valeurs initiales si on annule
+                  }}
+                >
+                  Annuler
+                </Button>
+              </>
+            )}
+          </div>
         </CardHeader>
 
         <Form {...form}>
