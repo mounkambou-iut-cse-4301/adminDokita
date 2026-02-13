@@ -11,8 +11,16 @@ import {
   Card,
   CardHeader,
   CardTitle,
+  CardContent,
 } from "../../components/components/ui/card";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Edit2,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { CustomCheckbox } from "../../components/components/ui/customcheck";
 import React, { useEffect, useState } from "react";
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
@@ -22,7 +30,7 @@ import {
   PopoverTrigger,
 } from "../../components/components/ui/popover";
 import { useNavigate } from "react-router-dom";
-import { Dialog, Transition } from "@headlessui/react";
+import { Dialog as HeadlessDialog, Transition } from "@headlessui/react";
 import TMModal from "../../components/components/ui/TM_Modal";
 import DetailMessage from "./detailMessageStruct";
 import TotalLoad from "../../components/components/totalLoad";
@@ -31,6 +39,23 @@ import useStoreAllFiche from "src/store/fiche/getAll";
 import useStoreOneFiche from "src/store/fiche/getOne";
 import Pagination from "../../components/components/ui/pagination";
 import config from "src/config/config.dev";
+import { Button } from "../../components/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/components/ui/dialog";
+import { Input } from "../../components/components/ui/input";
+import { Label } from "../../components/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/components/ui/select";
 
 type FicheOption = {
   label: string;
@@ -59,13 +84,21 @@ type Fiche = {
 
 const PAGE_SIZE = 7;
 
+type QuestionType = "TEXT" | "SELECT";
+
+type OptionItem = { id: string; label: string; value: string };
+
 type EditQuestion = {
   id: string;
-  type: string;
   label: string;
-  optionsText: string;
-  optionsValues: string[];
+  type: QuestionType;
+  order: number;
+  options?: OptionItem[];
 };
+
+function uid(prefix = "") {
+  return prefix + Math.random().toString(36).slice(2, 9);
+}
 
 export default function MessageStruct() {
   const [isChecked, setIsChecked] = useState(false);
@@ -84,6 +117,14 @@ export default function MessageStruct() {
   const [editIsActive, setEditIsActive] = useState(true);
   const [editQuestions, setEditQuestions] = useState<EditQuestion[]>([]);
   const [editResponsesText, setEditResponsesText] = useState("");
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<EditQuestion | null>(
+    null,
+  );
+  const [formLabel, setFormLabel] = useState("");
+  const [formType, setFormType] = useState<QuestionType>("TEXT");
+  const [formOptions, setFormOptions] = useState<OptionItem[]>([]);
 
   const { AllFiche, loadingAllFiche, fetchAllFiche, count } =
     useStoreAllFiche();
@@ -206,6 +247,73 @@ export default function MessageStruct() {
     } finally {
       setSavingEdit(false);
     }
+  };
+
+  const openCreateDialog = () => {
+    setEditingQuestion(null);
+    setFormLabel("");
+    setFormType("TEXT");
+    setFormOptions([]);
+    setEditDialogOpen(true);
+  };
+
+  const openEditDialog = (q: EditQuestion) => {
+    setEditingQuestion(q);
+    setFormLabel(q.label);
+    setFormType(q.type);
+    setFormOptions(q.options ? q.options.map((o) => ({ ...o })) : []);
+    setEditDialogOpen(true);
+  };
+
+  const saveQuestion = () => {
+    if (!formLabel.trim()) return;
+
+    if (editingQuestion) {
+      setEditQuestions((prev) =>
+        prev.map((p) =>
+          p.id === editingQuestion.id
+            ? {
+                ...p,
+                label: formLabel.trim(),
+                type: formType,
+                options: formType === "SELECT" ? formOptions : [],
+              }
+            : p,
+        ),
+      );
+    } else {
+      const newQ: EditQuestion = {
+        id: uid("q_"),
+        label: formLabel.trim(),
+        type: formType,
+        options: formType === "SELECT" ? formOptions : [],
+        order: editQuestions.length,
+      };
+      setEditQuestions((prev) => [...prev, newQ]);
+    }
+
+    setEditDialogOpen(false);
+  };
+
+  const removeQuestion = (id: string) => {
+    setEditQuestions((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const addOption = () => {
+    setFormOptions((prev) => [
+      ...prev,
+      { id: uid("o_"), label: "", value: uid("v_") },
+    ]);
+  };
+
+  const updateOption = (id: string, key: "label" | "value", value: string) => {
+    setFormOptions((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, [key]: value } : o)),
+    );
+  };
+
+  const removeOption = (id: string) => {
+    setFormOptions((prev) => prev.filter((o) => o.id !== id));
   };
 
   const handleAskDelete = (ficheId: number) => {
@@ -408,16 +516,16 @@ export default function MessageStruct() {
       </Table>
 
       <Transition show={isDeleteOpen} as={React.Fragment}>
-        <Dialog
+        <HeadlessDialog
           as="div"
           className="relative z-10"
           onClose={() => setIsDeleteOpen(false)}
         >
           <div className="fixed inset-0 bg-black bg-opacity-25 flex justify-center items-center">
-            <Dialog.Panel className="bg-white p-6 rounded-lg shadow-xl">
-              <Dialog.Title className="text-lg font-bold">
+            <HeadlessDialog.Panel className="bg-white p-6 rounded-lg shadow-xl">
+              <HeadlessDialog.Title className="text-lg font-bold">
                 Confirmation de suppression
-              </Dialog.Title>
+              </HeadlessDialog.Title>
               <p className="mt-2">
                 Voulez-vous vraiment supprimer cette fiche structuree ?
               </p>
@@ -437,9 +545,9 @@ export default function MessageStruct() {
                   {deleting ? "Suppression..." : "Supprimer"}
                 </button>
               </div>
-            </Dialog.Panel>
+            </HeadlessDialog.Panel>
           </div>
-        </Dialog>
+        </HeadlessDialog>
       </Transition>
 
       <TMModal
@@ -462,178 +570,186 @@ export default function MessageStruct() {
         size="full"
         height={85}
       >
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Modifier la fiche</h3>
+        <div className="max-w-5xl mx-auto mt-6 space-y-2 p-1">
+          <h1 className="text-2xl font-bold mb-10 ">
+            Formulaire Modification fiche structurée:
+          </h1>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Titre</label>
-            <input
-              className="w-full rounded-md border px-3 py-2 text-sm bg-white"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Titre"
-            />
+          <div className="bg-white rounded-2xl p-6 shadow-sm border">
+            <div className="grid sm:grid-cols-3 gap-4 items-end">
+              <div>
+                <Label>Titre</Label>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Titre du formulaire"
+                />
+              </div>
+
+              <div>
+                <Label>Description</Label>
+                <Input
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Description du formulaire"
+                />
+              </div>
+
+              <Button
+                onClick={openCreateDialog}
+                className="flex items-center gap-2 text-white"
+              >
+                <Plus size={14} /> Ajouter une question
+              </Button>
+            </div>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
-            <input
-              className="w-full rounded-md border px-3 py-2 text-sm bg-white"
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              placeholder="Description"
-            />
-          </div>
-
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              checked={editIsActive}
-              onChange={(e) => setEditIsActive(e.target.checked)}
-            />
-            Actif
-          </label>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Questions</label>
-              <button
-                className="text-xs px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200"
-                type="button"
-                onClick={() =>
-                  setEditQuestions((prev) => [
-                    ...prev,
-                    {
-                      id: `${Date.now()}`,
-                      type: "TEXT",
-                      label: "",
-                      optionsText: "",
-                      optionsValues: [],
-                    },
-                  ])
-                }
-              >
-                Ajouter une question
-              </button>
-            </div>
-
             {editQuestions.length === 0 && (
               <p className="text-sm text-gray-500">
-                Aucune question. Cliquez sur “Ajouter une question”.
+                Aucune question ajoutée pour le moment.
               </p>
             )}
 
-            {editQuestions.map((q, idx) => (
-              <div
-                key={q.id}
-                className="border rounded-md p-3 space-y-3 bg-gray-50"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Question {idx + 1}</p>
-                  <button
-                    className="text-xs text-red-600 hover:text-red-700"
-                    type="button"
-                    onClick={() =>
-                      setEditQuestions((prev) =>
-                        prev.filter((item) => item.id !== q.id),
-                      )
-                    }
-                  >
-                    Supprimer
-                  </button>
-                </div>
+            {editQuestions.map((q) => (
+              <Card key={q.id} className="p-4">
+                <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-medium text-lg">{q.label}</h3>
+                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                        {q.type}
+                      </span>
+                    </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Type</label>
-                  <select
-                    className="w-full rounded-md border px-2 py-2 text-sm bg-white"
-                    value={q.type}
-                    onChange={(e) =>
-                      setEditQuestions((prev) =>
-                        prev.map((item) =>
-                          item.id === q.id
-                            ? { ...item, type: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  >
-                    <option value="TEXT">TEXT</option>
-                    <option value="SELECT">SELECT</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Libellé</label>
-                  <input
-                    className="w-full rounded-md border px-2 py-2 text-sm bg-white"
-                    value={q.label}
-                    onChange={(e) =>
-                      setEditQuestions((prev) =>
-                        prev.map((item) =>
-                          item.id === q.id
-                            ? { ...item, label: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                    placeholder="Texte de la question"
-                  />
-                </div>
-
-                {q.type === "SELECT" && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium">
-                      Options (une par ligne)
-                    </label>
-                    <textarea
-                      className="w-full rounded-md border px-2 py-2 text-sm font-mono min-h-[100px] bg-white"
-                      value={q.optionsText}
-                      onChange={(e) =>
-                        setEditQuestions((prev) =>
-                          prev.map((item) =>
-                            item.id === q.id
-                              ? { ...item, optionsText: e.target.value }
-                              : item,
-                          ),
-                        )
-                      }
-                      placeholder={"Option A\nOption B"}
-                    />
+                    {q.type === "SELECT" && q.options?.length ? (
+                      <ul className="mt-2 text-sm text-gray-600 list-disc pl-5">
+                        {q.options.map((o) => (
+                          <li key={o.id}>{o.label}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-gray-400">
+                        Pas d’options / champ texte
+                      </p>
+                    )}
                   </div>
-                )}
-              </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => openEditDialog(q)}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit2 size={14} /> Modifier
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => removeQuestion(q.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <Trash2 size={14} /> Supprimer
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Responses (une reponse par ligne)
-            </label>
-            <textarea
-              className="w-full rounded-md border px-3 py-2 text-sm font-mono min-h-[100px] bg-white"
-              value={editResponsesText}
-              onChange={(e) => setEditResponsesText(e.target.value)}
-              placeholder={"Reponse 1\nReponse 2"}
-            />
+          <div className="flex justify-end text-white">
+            <Button onClick={handleUpdateFiche} disabled={savingEdit}>
+              {savingEdit && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+              {savingEdit ? "Modification..." : "Enregistrer le formulaire"}
+            </Button>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <button
-              className="bg-gray-300 px-4 py-2 rounded-md"
-              onClick={() => setIsEditOpen(false)}
-              disabled={savingEdit}
-            >
-              Annuler
-            </button>
-            <button
-              className="bg-primary text-white px-4 py-2 rounded-md"
-              onClick={handleUpdateFiche}
-              disabled={savingEdit}
-            >
-              {savingEdit ? "Modification..." : "Enregistrer"}
-            </button>
-          </div>
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent className="sm:max-w-4xl w-[90vw] max-h-[85vh]">
+              <DialogHeader>
+                <DialogTitle className="bg-white">
+                  {editingQuestion
+                    ? "Modifier la question"
+                    : "Ajouter une question"}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-2">
+                <div>
+                  <Label>Label</Label>
+                  <Input
+                    value={formLabel}
+                    onChange={(e) => setFormLabel(e.target.value)}
+                    placeholder="Ex: Depuis quand as-tu le palu ?"
+                  />
+                </div>
+
+                <div>
+                  <Label>Type</Label>
+                  <Select
+                    onValueChange={(val) => setFormType(val as QuestionType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={formType} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TEXT">TEXT</SelectItem>
+                      <SelectItem value="SELECT">SELECT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formType === "SELECT" && (
+                  <div className="border rounded p-3 space-y-3 bg-gray-50">
+                    <div className="flex items-center justify-between text-white">
+                      <Label>Options</Label>
+                      <Button size="sm" onClick={addOption}>
+                        + Ajouter une option
+                      </Button>
+                    </div>
+
+                    {formOptions.length === 0 && (
+                      <p className="text-sm text-gray-500">
+                        Aucune option pour le moment.
+                      </p>
+                    )}
+
+                    <div className="space-y-2">
+                      {formOptions.map((opt) => (
+                        <div key={opt.id} className="flex gap-2 items-center">
+                          <Input
+                            value={opt.label}
+                            onChange={(e) =>
+                              updateOption(opt.id, "label", e.target.value)
+                            }
+                            placeholder="Label (ex: Un jour)"
+                          />
+                          <Button
+                            variant="ghost"
+                            onClick={() => removeOption(opt.id)}
+                            className="px-2 bg-red-500 text-white"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="secondary"
+                  onClick={() => setEditDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={saveQuestion} disabled={!formLabel.trim()}>
+                  {editingQuestion ? "Enregistrer" : "Ajouter"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </TMModal>
     </div>
@@ -643,10 +759,14 @@ export default function MessageStruct() {
 function mapQuestionsToEdit(questions: FicheQuestion[]): EditQuestion[] {
   return questions.map((q) => ({
     id: q.id,
-    type: q.type,
+    type: q.type as QuestionType,
     label: q.label,
-    optionsText: (q.options ?? []).map((opt) => opt.label).join("\n"),
-    optionsValues: (q.options ?? []).map((opt) => opt.value),
+    order: q.order,
+    options: (q.options ?? []).map((opt, index) => ({
+      id: `${q.id}_opt_${index}`,
+      label: opt.label,
+      value: opt.value,
+    })),
   }));
 }
 
@@ -658,16 +778,12 @@ function mapEditToQuestions(questions: EditQuestion[]): FicheQuestion[] {
     order: idx,
     options:
       q.type === "SELECT"
-        ? (q.optionsText || "")
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean)
-            .map((label, index) => ({
-              label,
-              value:
-                q.optionsValues[index] ||
-                `v_${Math.random().toString(36).slice(2, 9)}`,
+        ? (q.options ?? [])
+            .map((opt) => ({
+              label: opt.label.trim(),
+              value: opt.value || `v_${Math.random().toString(36).slice(2, 9)}`,
             }))
+            .filter((opt) => opt.label)
         : [],
   }));
 }
@@ -683,3 +799,4 @@ function mapTextToResponses(text: string): string[] {
     .map((line) => line.trim())
     .filter(Boolean);
 }
+
