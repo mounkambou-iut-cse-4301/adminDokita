@@ -26,7 +26,7 @@ const useStoreOneOrdonnance = create<VehicleState>((set) => ({
     set({ loadingOneOrdonnance: true }); // Démarre le chargement
     try {
       const response = await axios.get(
-        `${config.mintClient}protocoles-ordonance/${user_id}/`,
+        `${config.mintClient}protocoles-ordonance/medicaments/${user_id}/`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // Pass the token in headers

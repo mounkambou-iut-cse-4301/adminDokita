@@ -31,6 +31,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { Input } from "../../components/components/ui/input";
+import { Textarea } from "../../components/components/ui/textarea";
 import { CustomCheckbox } from "../../components/components/ui/customcheck";
 import { CustomSwitch } from "../../components/components/ui/customswitch";
 import React, { useEffect, useState } from "react";
@@ -64,8 +65,11 @@ import { Calendar } from "../../components/components/ui/calendar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "../../components/lib/utils";
-import DetailOrdonnance from "./detailMessageStruct";
 import useStoreAllMedicamants from "src/store/medicamant/getAll";
+import useStoreOneMedicament from "src/store/medicamant/getOne";
+import axios from "axios";
+import config from "src/config/config.dev";
+import DetailOrdonnance from "./detailMessageStruct";
 
 type FilterFormValues = {
   createdAt?: Date;
@@ -78,6 +82,10 @@ export default function Medicament() {
   const [isChecked, setIsChecked] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [detailCard, setDetailCard] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [idcartes, setIdcartes] = useState("");
 
@@ -89,6 +97,20 @@ export default function Medicament() {
 
   const { AllMedicamants, loadingAllMedicamants, fetchAllMedicamants, count } =
     useStoreAllMedicamants();
+
+  const { OneOrdonnance, loadingOneOrdonnance, fetchOneOrdonnance } =
+    useStoreOneMedicament();
+
+  const [editForm, setEditForm] = useState({
+    name: "",
+    nameCommercial: "",
+    nameLabo: "",
+    dosage: "",
+    forme: "",
+    voie: "",
+    posologie: "",
+    comment: "",
+  });
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -103,6 +125,84 @@ export default function Medicament() {
   useEffect(() => {
     fetchAllMedicamants({ page, limit: 5, q: debouncedSearch });
   }, [page, debouncedSearch, fetchAllMedicamants]);
+
+  useEffect(() => {
+    if (!editOpen || !OneOrdonnance) return;
+    if (selectedId && OneOrdonnance.medicamentId !== selectedId) return;
+
+    setEditForm({
+      name: OneOrdonnance.name ?? "",
+      nameCommercial: OneOrdonnance.nameCommercial ?? "",
+      nameLabo: OneOrdonnance.nameLabo ?? "",
+      dosage: OneOrdonnance.dosage ?? "",
+      forme: OneOrdonnance.forme ?? "",
+      voie: OneOrdonnance.voie ?? "",
+      posologie: OneOrdonnance.posologie ?? "",
+      comment: OneOrdonnance.comment ?? "",
+    });
+  }, [editOpen, OneOrdonnance, selectedId]);
+
+  const handleUpdate = async () => {
+    if (!selectedId) return;
+    setSavingEdit(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("User is not authenticated");
+      }
+
+      await axios.patch(
+        `${config.mintClient}protocoles-ordonance/medicaments/${selectedId}/`,
+        {
+          name: editForm.name,
+          nameCommercial: editForm.nameCommercial,
+          nameLabo: editForm.nameLabo,
+          dosage: editForm.dosage,
+          forme: editForm.forme,
+          voie: editForm.voie,
+          posologie: editForm.posologie,
+          comment: editForm.comment,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      await fetchAllMedicamants({ page, limit: 5, q: debouncedSearch });
+      setEditOpen(false);
+    } catch (error) {
+      console.error("Error updating medicament:", error);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedId) return;
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("User is not authenticated");
+      }
+      await axios.delete(
+        `${config.mintClient}protocoles-ordonance/medicaments/${selectedId}/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      await fetchAllMedicamants({ page, limit: 5, q: debouncedSearch });
+      setIsOpen(false);
+      setSelectedId(null);
+    } catch (error) {
+      console.error("Error deleting medicament:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loadingAllMedicamants) {
     return <TotalLoad />;
@@ -203,7 +303,7 @@ export default function Medicament() {
                                   variant="outline"
                                   className={cn(
                                     "w-full justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
+                                    !field.value && "text-muted-foreground",
                                   )}
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -310,8 +410,19 @@ export default function Medicament() {
                       <li
                         className="flex items-center gap-2 p-2 border-b"
                         onClick={() => {
+                          setSelectedId(a.medicamentId);
+                          fetchOneOrdonnance(String(a.medicamentId));
+                          setEditOpen(true);
+                        }}
+                      >
+                        <FaEdit className="text-gray-600" />
+                        <span>Modifier</span>
+                      </li>
+                      <li
+                        className="flex items-center gap-2 p-2 border-b"
+                        onClick={() => {
                           setDetailCard(true);
-                          setIdcartes(a.medicamentId);
+                          setIdcartes(String(a.medicamentId));
                         }}
                       >
                         <FaEdit className="text-gray-600" />
@@ -320,7 +431,11 @@ export default function Medicament() {
 
                       <li
                         className="flex items-center gap-2 p-2"
-                        onClick={() => setIsOpen(true)}
+                        onClick={() => {
+                          setSelectedId(a.medicamentId);
+                          fetchOneOrdonnance(String(a.medicamentId));
+                          setIsOpen(true);
+                        }}
                       >
                         <FaTrash className="text-red-600" />
                         <span className="text-red-600">Supprimer</span>
@@ -360,7 +475,10 @@ export default function Medicament() {
               <Dialog.Title className="text-lg font-bold">
                 {"admin.confirm_delete"}
               </Dialog.Title>
-              <p className="mt-2">{"admin.confirm_delete_message"}</p>
+              <p className="mt-2">
+                {"admin.confirm_delete_message"}{" "}
+                {OneOrdonnance?.name ? `(${OneOrdonnance.name})` : ""}
+              </p>
               <div className="mt-4 flex justify-end space-x-3">
                 <button
                   className="bg-gray-300 px-4 py-2 rounded-md"
@@ -370,11 +488,10 @@ export default function Medicament() {
                 </button>
                 <button
                   className="bg-red-600 text-white px-4 py-2 rounded-md"
-                  //  onClick={handleDeleteUser}
-                  // disabled={loadingdeleteUsers}
+                  onClick={handleDelete}
+                  disabled={deleting}
                 >
-                  {/*  {loadingdeleteUsers ? t("admin.deleting") : t("admin.delete")} */}{" "}
-                  supprimer
+                  {deleting ? "Suppression..." : "Supprimer"}
                 </button>
               </div>
             </Dialog.Panel>
@@ -383,13 +500,161 @@ export default function Medicament() {
       </Transition>
 
       <TMModal
+        isOpen={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+        }}
+        size="full"
+        height={80}
+      >
+        <div className="w-full p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            Modifier le mÃ©dicament
+          </h2>
+
+          {loadingOneOrdonnance ? (
+            <div>Chargement...</div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Nom</label>
+                  <Input
+                    value={editForm.name}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Nom Commercial</label>
+                  <Input
+                    value={editForm.nameCommercial}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        nameCommercial: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Nom Laboratoire</label>
+                  <Input
+                    value={editForm.nameLabo}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        nameLabo: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Dosage</label>
+                  <Input
+                    value={editForm.dosage}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        dosage: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Forme</label>
+                  <Input
+                    value={editForm.forme}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        forme: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Voie</label>
+                  <Input
+                    value={editForm.voie}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        voie: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Posologie</label>
+                <Input
+                  value={editForm.posologie}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      posologie: e.target.value,
+                    }))
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Commentaire</label>
+                <Textarea
+                  value={editForm.comment}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      comment: e.target.value,
+                    }))
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setEditOpen(false)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleUpdate} disabled={savingEdit}>
+                  {savingEdit ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </TMModal>
+
+      <TMModal
         isOpen={detailCard}
         onClose={() => {
           setDetailCard(false);
           // window.location.reload();
         }}
         // title="Detail carte"
-        size="md"
+        size="full"
         height={70}
       >
         <DetailOrdonnance idcartes={idcartes} />
