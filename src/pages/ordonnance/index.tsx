@@ -29,8 +29,10 @@ import {
   MoreHorizontal,
   CalendarIcon,
   PlusCircle,
+  XCircle,
 } from "lucide-react";
 import { Input } from "../../components/components/ui/input";
+import { Textarea } from "../../components/components/ui/textarea";
 import { CustomCheckbox } from "../../components/components/ui/customcheck";
 import { CustomSwitch } from "../../components/components/ui/customswitch";
 import React, { useEffect, useState } from "react";
@@ -66,6 +68,9 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "../../components/lib/utils";
 import DetailOrdonnance from "./detailMessageStruct";
+import useStoreOneOrdonnance from "src/store/ordonnance/getOne";
+import axios from "axios";
+import config from "src/config/config.dev";
 
 type FilterFormValues = {
   createdAt?: Date;
@@ -78,6 +83,10 @@ export default function Ordannance() {
   const [isChecked, setIsChecked] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [detailCard, setDetailCard] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [idcartes, setIdcartes] = useState("");
 
@@ -89,6 +98,24 @@ export default function Ordannance() {
 
   const { AllOrdonnances, loadingAllOrdonnances, fetchAllOrdonnances, count } =
     useStoreAllOrdonnances();
+
+  const { OneOrdonnance, loadingOneOrdonnance, fetchOneOrdonnance } =
+    useStoreOneOrdonnance();
+
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+  });
+  const [editTraitements, setEditTraitements] = useState<
+    Array<{
+      name: string;
+      voie: string;
+      duree: string;
+      forme: string;
+      dosage: string;
+      posologie: string;
+    }>
+  >([]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -103,6 +130,98 @@ export default function Ordannance() {
   useEffect(() => {
     fetchAllOrdonnances({ page, limit: 5, q: debouncedSearch });
   }, [page, debouncedSearch, fetchAllOrdonnances]);
+
+  useEffect(() => {
+    if (!editOpen || !OneOrdonnance) return;
+    if (selectedId && OneOrdonnance.protocoleId !== selectedId) return;
+
+    setEditForm({
+      name: OneOrdonnance.name ?? "",
+      description: OneOrdonnance.description ?? "",
+    });
+    setEditTraitements(
+      Array.isArray(OneOrdonnance.traitement) ? OneOrdonnance.traitement : []
+    );
+  }, [editOpen, OneOrdonnance, selectedId]);
+
+  const addTraitement = () => {
+    setEditTraitements((prev) => [
+      ...prev,
+      { name: "", voie: "", duree: "", forme: "", dosage: "", posologie: "" },
+    ]);
+  };
+
+  const removeTraitement = (index: number) => {
+    setEditTraitements((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateTraitement = (
+    index: number,
+    key: "name" | "voie" | "duree" | "forme" | "dosage" | "posologie",
+    value: string
+  ) => {
+    setEditTraitements((prev) =>
+      prev.map((t, i) => (i === index ? { ...t, [key]: value } : t))
+    );
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedId) return;
+    setSavingEdit(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("User is not authenticated");
+      }
+
+      await axios.patch(
+        `${config.mintClient}protocoles-ordonance/${selectedId}/`,
+        {
+          name: editForm.name,
+          description: editForm.description,
+          traitement: editTraitements,
+          images: OneOrdonnance?.images ?? null,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      await fetchAllOrdonnances({ page, limit: 5, q: debouncedSearch });
+      setEditOpen(false);
+    } catch (error) {
+      console.error("Error updating ordonnance:", error);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedId) return;
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("User is not authenticated");
+      }
+      await axios.delete(
+        `${config.mintClient}protocoles-ordonance/${selectedId}/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      await fetchAllOrdonnances({ page, limit: 5, q: debouncedSearch });
+      setIsOpen(false);
+      setSelectedId(null);
+    } catch (error) {
+      console.error("Error deleting ordonnance:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loadingAllOrdonnances) {
     return <TotalLoad />;
@@ -333,8 +452,22 @@ export default function Ordannance() {
                         className="flex items-center gap-2 p-2 border-b last:border-none"
                         onClick={(event) => {
                           event.stopPropagation();
+                          setSelectedId(a.protocoleId);
+                          fetchOneOrdonnance(String(a.protocoleId));
+                          setEditOpen(true);
+                        }}
+                      >
+                        <FaEdit className="text-gray-600 text-lg cursor-pointer" />
+                        <span className="font-medium text-gray-500 text-sm hover:text-gray-600">
+                          Modifier
+                        </span>
+                      </li>
+                      <li
+                        className="flex items-center gap-2 p-2 border-b last:border-none"
+                        onClick={(event) => {
+                          event.stopPropagation();
                           setDetailCard(true);
-                          setIdcartes(a.protocoleId);
+                          setIdcartes(String(a.protocoleId));
                         }}
                       >
                         <FaEdit className="text-gray-600 text-lg cursor-pointer" />
@@ -347,6 +480,8 @@ export default function Ordannance() {
                         className="flex items-center gap-2 p-2 border-b last:border-none"
                         onClick={(event) => {
                           event.stopPropagation();
+                          setSelectedId(a.protocoleId);
+                          fetchOneOrdonnance(String(a.protocoleId));
                           setIsOpen(true);
                         }}
                       >
@@ -390,7 +525,10 @@ export default function Ordannance() {
               <Dialog.Title className="text-lg font-bold">
                 {"admin.confirm_delete"}
               </Dialog.Title>
-              <p className="mt-2">{"admin.confirm_delete_message"}</p>
+              <p className="mt-2">
+                {"admin.confirm_delete_message"}{" "}
+                {OneOrdonnance?.name ? `(${OneOrdonnance.name})` : ""}
+              </p>
               <div className="mt-4 flex justify-end space-x-3">
                 <button
                   className="bg-gray-300 px-4 py-2 rounded-md"
@@ -400,11 +538,10 @@ export default function Ordannance() {
                 </button>
                 <button
                   className="bg-red-600 text-white px-4 py-2 rounded-md"
-                  //  onClick={handleDeleteUser}
-                  // disabled={loadingdeleteUsers}
+                  onClick={handleDelete}
+                  disabled={deleting}
                 >
-                  {/*  {loadingdeleteUsers ? t("admin.deleting") : t("admin.delete")} */}{" "}
-                  supprimer
+                  {deleting ? "Suppression..." : "Supprimer"}
                 </button>
               </div>
             </Dialog.Panel>
@@ -413,13 +550,139 @@ export default function Ordannance() {
       </Transition>
 
       <TMModal
+        isOpen={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+        }}
+        size="full"
+        height={80}
+      >
+        <div className="w-full p-6">
+          <h2 className="text-xl font-semibold mb-4">Modifier lâ€™ordonnance</h2>
+
+          {loadingOneOrdonnance ? (
+            <div>Chargement...</div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm font-medium">Nom</label>
+                <Input
+                  value={editForm.name}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={editForm.description}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">MÃ©dicaments</label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={addTraitement}
+                    className="flex items-center gap-1"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Ajouter
+                  </Button>
+                </div>
+
+                {editTraitements.map((t, i) => (
+                  <div
+                    key={i}
+                    className="grid grid-cols-6 gap-3 p-3 border rounded-lg bg-blue-50"
+                  >
+                    <Input
+                      placeholder="Nom"
+                      value={t.name}
+                      onChange={(e) =>
+                        updateTraitement(i, "name", e.target.value)
+                      }
+                    />
+                    <Input
+                      placeholder="Dosage"
+                      value={t.dosage}
+                      onChange={(e) =>
+                        updateTraitement(i, "dosage", e.target.value)
+                      }
+                    />
+                    <Input
+                      placeholder="Forme"
+                      value={t.forme}
+                      onChange={(e) =>
+                        updateTraitement(i, "forme", e.target.value)
+                      }
+                    />
+                    <Input
+                      placeholder="Posologie"
+                      value={t.posologie}
+                      onChange={(e) =>
+                        updateTraitement(i, "posologie", e.target.value)
+                      }
+                    />
+                    <Input
+                      placeholder="DurÃ©e"
+                      value={t.duree}
+                      onChange={(e) =>
+                        updateTraitement(i, "duree", e.target.value)
+                      }
+                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Voie"
+                        value={t.voie}
+                        onChange={(e) =>
+                          updateTraitement(i, "voie", e.target.value)
+                        }
+                      />
+                      <XCircle
+                        onClick={() => removeTraitement(i)}
+                        className="w-5 h-5 text-red-500 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={handleUpdate} disabled={savingEdit}>
+                  {savingEdit ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </TMModal>
+
+      <TMModal
         isOpen={detailCard}
         onClose={() => {
           setDetailCard(false);
           // window.location.reload();
         }}
         // title="Detail carte"
-        size="md"
+        size="full"
         height={70}
       >
         <DetailOrdonnance idcartes={idcartes} />
