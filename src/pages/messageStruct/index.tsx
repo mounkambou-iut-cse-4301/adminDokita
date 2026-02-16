@@ -799,4 +799,3 @@ function mapTextToResponses(text: string): string[] {
     .map((line) => line.trim())
     .filter(Boolean);
 }
-
