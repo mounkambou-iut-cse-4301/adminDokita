@@ -713,7 +713,7 @@ export default function MessageStruct() {
                       </p>
                     )}
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2 ">
                       {formOptions.map((opt) => (
                         <div key={opt.id} className="flex gap-2 items-center">
                           <Input
@@ -722,6 +722,7 @@ export default function MessageStruct() {
                               updateOption(opt.id, "label", e.target.value)
                             }
                             placeholder="Label (ex: Un jour)"
+                            className="w-[750px]"
                           />
                           <Button
                             variant="ghost"
