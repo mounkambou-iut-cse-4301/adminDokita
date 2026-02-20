@@ -33,6 +33,11 @@ import AddMedicament from "src/pages/medicament/add";
 import AddSpecialite from "src/pages/specialite/add";
 import Specialite from "src/pages/specialite";
 import MessageStruct from "src/pages/messageStruct";
+import AdminUsers from "src/pages/adminUsers";
+import AddAdminUser from "src/pages/adminUsers/add";
+import AdminUserDetail from "src/pages/adminUsers/detail";
+import AdminRoles from "src/pages/adminRoles";
+import RoleDetail from "src/pages/adminRoles/detail";
 
 interface RouteType {
   path: string;
@@ -146,6 +151,51 @@ const routes: RouteType[] = [
       </ProtectedRoute>
     ),
     children: [{ path: "/message_structure", element: <MessageStruct /> }],
+  },
+  {
+    path: "/admin/users",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/admin/users", element: <AdminUsers /> }],
+  },
+  {
+    path: "/admin/users/create",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/admin/users/create", element: <AddAdminUser /> }],
+  },
+  {
+    path: "/admin/users/:id",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/admin/users/:id", element: <AdminUserDetail /> }],
+  },
+  {
+    path: "/admin/roles",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/admin/roles", element: <AdminRoles /> }],
+  },
+  {
+    path: "/admin/roles/:id",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: "/admin/roles/:id", element: <RoleDetail /> }],
   },
 
   {

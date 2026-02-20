@@ -155,6 +155,18 @@ const SideBar = () => {
       icon: <FaSyncAlt />,
       subItems: [],
     },
+    {
+      name: "Administrateurs",
+      pathname: "/admin/users",
+      icon: <FaUser />,
+      subItems: [],
+    },
+    {
+      name: "Rôles",
+      pathname: "/admin/roles",
+      icon: <FaTags />,
+      subItems: [],
+    },
   ];
 
   return (
