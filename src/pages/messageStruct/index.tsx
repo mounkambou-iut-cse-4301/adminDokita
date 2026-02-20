@@ -56,6 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/components/ui/select";
+import type { Permission } from "src/types/admin";
 
 type FicheOption = {
   label: string;
@@ -132,6 +133,34 @@ export default function MessageStruct() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+
+  const userPermissions = new Set<string>(
+    Array.isArray(storedUser?.permissions)
+      ? storedUser.permissions.map((perm: Permission) => perm.name)
+      : []
+  );
+
+  const hasPermission = (required?: string | string[]) => {
+    if (!required) return true;
+    if (userPermissions.has("ALL_PERMISSIONS")) return true;
+    if (userPermissions.has("ADMIN_PANEL")) return true;
+    const requiredList = Array.isArray(required) ? required : [required];
+    return requiredList.some((perm) => userPermissions.has(perm));
+  };
+
+  const canList = hasPermission("LIST_FICHES");
+  const canCreate = hasPermission("CREATE_FICHES");
+  const canViewDetail = hasPermission("GET_FICHES");
+  const canEdit = hasPermission("UPDATE_FICHES");
+  const canDelete = hasPermission("DELETE_FICHES");
+
   const getToken = () => localStorage.getItem("token");
 
   const fetchWithFallback = async (
@@ -145,8 +174,10 @@ export default function MessageStruct() {
   };
 
   useEffect(() => {
-    fetchAllFiche({ page, limit: PAGE_SIZE });
-  }, [page, fetchAllFiche]);
+    if (canList) {
+      fetchAllFiche({ page, limit: PAGE_SIZE });
+    }
+  }, [page, canList, fetchAllFiche]);
 
   useEffect(() => {
     if (OneFiche && selectedFicheId === OneFiche.ficheId) {
@@ -363,6 +394,16 @@ export default function MessageStruct() {
     }
   };
 
+  if (!canList) {
+    return (
+      <div className="p-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          Vous n'avez pas la permission d'accéder aux fiches structurées.
+        </div>
+      </div>
+    );
+  }
+
   if (loadingAllFiche) {
     return <TotalLoad />;
   }
@@ -370,12 +411,14 @@ export default function MessageStruct() {
   return (
     <div className="flex flex-col p-4 h-full">
       <div className="flex justify-end">
-        <div
-          className="flex items-center gap-2 bg-primary p-2 rounded-full my-3 cursor-pointer text-white"
-          onClick={() => navigate("/ajouter_message")}
-        >
-          <PlusCircle className="w-4 h-4" /> Ajouter un Message structure
-        </div>
+        {canCreate && (
+          <div
+            className="flex items-center gap-2 bg-primary p-2 rounded-full my-3 cursor-pointer text-white"
+            onClick={() => navigate("/ajouter_message")}
+          >
+            <PlusCircle className="w-4 h-4" /> Ajouter un Message structure
+          </div>
+        )}
       </div>
 
       <Card className="mb-6">
@@ -452,44 +495,50 @@ export default function MessageStruct() {
                     </PopoverTrigger>
                     <PopoverContent className="p-4 w-full">
                       <ul className="space-y-2 cursor-pointer">
-                        <li
-                          className="flex items-center gap-2 p-2 border-b last:border-none"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleOpenDetail(fiche.ficheId);
-                          }}
-                        >
-                          <FaEye className="text-gray-600 text-lg cursor-pointer" />
-                          <span className="font-medium text-gray-500 text-sm hover:text-gray-600 transition-colors duration-200">
-                            Detail
-                          </span>
-                        </li>
+                        {canViewDetail && (
+                          <li
+                            className="flex items-center gap-2 p-2 border-b last:border-none"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleOpenDetail(fiche.ficheId);
+                            }}
+                          >
+                            <FaEye className="text-gray-600 text-lg cursor-pointer" />
+                            <span className="font-medium text-gray-500 text-sm hover:text-gray-600 transition-colors duration-200">
+                              Detail
+                            </span>
+                          </li>
+                        )}
 
-                        <li
-                          className="flex items-center gap-2 p-2 border-b last:border-none"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleOpenEdit(fiche);
-                          }}
-                        >
-                          <FaEdit className="text-blue-600 text-lg cursor-pointer" />
-                          <span className="font-medium text-blue-500 text-sm hover:text-blue-600 transition-colors duration-200">
-                            Modifier
-                          </span>
-                        </li>
+                        {canEdit && (
+                          <li
+                            className="flex items-center gap-2 p-2 border-b last:border-none"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleOpenEdit(fiche);
+                            }}
+                          >
+                            <FaEdit className="text-blue-600 text-lg cursor-pointer" />
+                            <span className="font-medium text-blue-500 text-sm hover:text-blue-600 transition-colors duration-200">
+                              Modifier
+                            </span>
+                          </li>
+                        )}
 
-                        <li
-                          className="flex items-center gap-2 p-2 border-b last:border-none"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleAskDelete(fiche.ficheId);
-                          }}
-                        >
-                          <FaTrash className="text-red-600 text-lg cursor-pointer" />
-                          <span className="font-medium text-red-500 text-sm hover:text-red-600 transition-colors duration-200">
-                            Supprimer
-                          </span>
-                        </li>
+                        {canDelete && (
+                          <li
+                            className="flex items-center gap-2 p-2 border-b last:border-none"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleAskDelete(fiche.ficheId);
+                            }}
+                          >
+                            <FaTrash className="text-red-600 text-lg cursor-pointer" />
+                            <span className="font-medium text-red-500 text-sm hover:text-red-600 transition-colors duration-200">
+                              Supprimer
+                            </span>
+                          </li>
+                        )}
                       </ul>
                     </PopoverContent>
                   </Popover>

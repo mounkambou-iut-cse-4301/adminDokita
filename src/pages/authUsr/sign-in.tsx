@@ -49,7 +49,12 @@ const SignIn = () => {
 
       const response = await loginUser(formattedData);
       if (response?.token) {
-        localStorage.setItem("user", JSON.stringify(response.user));
+        const mergedUser = {
+          ...response.user,
+          roles: response.user?.roles ?? response.roles ?? [],
+          permissions: response.user?.permissions ?? response.permissions ?? [],
+        };
+        localStorage.setItem("user", JSON.stringify(mergedUser));
         localStorage.setItem("token", response.token);
 
         toast({

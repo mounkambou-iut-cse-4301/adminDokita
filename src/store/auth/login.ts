@@ -2,15 +2,26 @@ import config from "src/config/config.dev";
 import { create } from "zustand";
 
 interface User {
-  id: string;
+  userId?: number;
+  id?: string;
   phone: string;
-  name: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
+  roles?: Array<{ roleId: number; name: string; description?: string | null }>;
+  permissions?: Array<{
+    permissionId: number;
+    name: string;
+    description?: string | null;
+  }>;
 }
 
 interface LoginResponse {
   token: string;
   user: User;
+  roles?: User["roles"];
+  permissions?: User["permissions"];
 }
 
 interface LoginUserState {
@@ -57,7 +68,12 @@ const useAddessloginUserStore = create<LoginUserState>((set) => ({
       });
 
       // ✅ Stockage local
-      localStorage.setItem("user", JSON.stringify(data.user));
+      const mergedUser = {
+        ...data.user,
+        roles: data.user?.roles ?? data.roles ?? [],
+        permissions: data.user?.permissions ?? data.permissions ?? [],
+      };
+      localStorage.setItem("user", JSON.stringify(mergedUser));
       localStorage.setItem("token", data.token);
 
       return data;

@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import useStoreOverview from "src/store/admin/overview";
 import useStoreTopDoctors from "src/store/admin/topDoctors";
+import type { Permission } from "src/types/admin";
 
 const data = [
   { mois: "Jan", profit: 4000 },
@@ -36,14 +37,53 @@ const Home = () => {
   const { TopDoctors, loadingTopDoctors, fetchTopDoctors } =
     useStoreTopDoctors();
 
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+
+  const userPermissions = new Set<string>(
+    Array.isArray(storedUser?.permissions)
+      ? storedUser.permissions.map((perm: Permission) => perm.name)
+      : []
+  );
+
+  const hasPermission = (required?: string | string[]) => {
+    if (!required) return true;
+    if (userPermissions.has("ALL_PERMISSIONS")) return true;
+    if (userPermissions.has("ADMIN_PANEL")) return true;
+    const requiredList = Array.isArray(required) ? required : [required];
+    return requiredList.some((perm) => userPermissions.has(perm));
+  };
+
+  const canViewDashboard = hasPermission("ADMIN_PANEL");
+  const canListUsers = hasPermission("LIST_USERS");
+  const canListReservations = hasPermission("LIST_RESERVATIONS");
+  const canListTransactions = hasPermission("LIST_TRANSACTIONS");
+
   useEffect(() => {
-    fetchOverview();
-    fetchTopDoctors();
-  }, [fetchOverview, fetchTopDoctors]);
+    if (canViewDashboard) {
+      fetchOverview();
+      fetchTopDoctors();
+    }
+  }, [canViewDashboard, fetchOverview, fetchTopDoctors]);
 
   console.log("Overview", Overview);
 
   console.log("TopDoctors", TopDoctors);
+
+  if (!canViewDashboard) {
+    return (
+      <div className="p-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          Vous n'avez pas la permission d'accéder à ce tableau de bord.
+        </div>
+      </div>
+    );
+  }
 
   if (loadingOverview) {
     return <TotalLoad />;
@@ -55,37 +95,45 @@ const Home = () => {
 
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <CardStat
+          {canListUsers && (
+            <CardStat
             title="Nombre total de Médecins"
             total={Overview?.totals?.doctors}
             growth="10.5%"
             growthPositive={true}
             monthlyChange={Overview?.totals?.lastMonth?.doctors}
             onClick={() => navigate("/doctors")}
-          />
+            />
+          )}
 
-          <CardStat
+          {canListUsers && (
+            <CardStat
             title="Nombre total de Patients"
             total={Overview?.totals?.patients}
             growth="10.5%"
             growthPositive={true}
             monthlyChange={Overview?.totals?.lastMonth?.patients}
             onClick={() => navigate("/patients")}
-          />
-          <CardRdvStat
+            />
+          )}
+          {canListReservations && (
+            <CardRdvStat
             title="Nombres total des rendez vous"
             COMPLETED={Overview?.reservationsByStatus?.total?.COMPLETED}
             CANCELLED={Overview?.reservationsByStatus?.total?.CANCELLED}
             PENDING={Overview?.reservationsByStatus?.total?.PENDING}
             onClick={() => navigate("/rendez_vous")}
-          />
-          <CardRdvStat
+            />
+          )}
+          {canListTransactions && (
+            <CardRdvStat
             title="Transactions"
             PENDING={Overview?.transactionsByStatus?.PENDING}
             CANCELLED={Overview?.transactionsByStatus?.CANCELLED}
             PAID={Overview?.transactionsByStatus?.PAID}
             onClick={() => navigate("/transaction")}
-          />
+            />
+          )}
         </div>
 
         {/* Revenus et transactions */}
@@ -122,7 +170,8 @@ const Home = () => {
         {/* Bas: Top médecins + Graphique */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Top médecins */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
+          {canListUsers && (
+            <div className="bg-white p-4 rounded-lg shadow-sm border">
             <h3 className="font-semibold text-gray-800 mb-4">Top médecins</h3>
             {TopDoctors?.map((t: any, index: number) => {
               console.log("DOCTOR ===>", t); // 👈 regarde la structure exacte
@@ -159,6 +208,7 @@ const Home = () => {
               );
             })}
           </div>
+          )}
 
           {/* Graphique placeholder */}
           <div className="bg-white p-4 rounded-lg shadow-sm border">
