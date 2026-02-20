@@ -21,6 +21,6 @@ export interface User {
   isBlock?: boolean;
   isVerified?: boolean;
   roles?: Role[];
+  permissions?: Permission[];
   createdAt?: string;
 }
-

@@ -21,6 +21,8 @@ import {
 import { useTranslation } from "../hooks/useTranslation";
 import { useThemeStore } from "src/store/themeStore";
 import { GraduationCap } from "lucide-react";
+import usePermissionStore from "src/store/permissionStore";
+import type { Permission } from "src/types/admin";
 
 const SideBar = () => {
   const navigate = useNavigate();
@@ -28,6 +30,14 @@ const SideBar = () => {
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
   const { theme } = useThemeStore();
+  const { permissions, fetchPermissions } = usePermissionStore();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetchPermissions({ page: 1, limit: 500 });
+    }
+  }, [fetchPermissions]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -40,12 +50,43 @@ const SideBar = () => {
     }));
   };
 
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+
+  const userPermissions = new Set<string>(
+    Array.isArray(storedUser?.permissions)
+      ? storedUser.permissions.map((perm: Permission) => perm.name)
+      : []
+  );
+
+  const allPermissions = new Set<string>(
+    Array.isArray(permissions) ? permissions.map((perm) => perm.name) : []
+  );
+
+  const hasPermission = (required?: string | string[]) => {
+    if (!required) return true;
+    if (userPermissions.has("ALL_PERMISSIONS")) return true;
+    if (userPermissions.has("ADMIN_PANEL")) return true;
+    const requiredList = Array.isArray(required) ? required : [required];
+    const effectiveRequired =
+      allPermissions.size > 0
+        ? requiredList.filter((perm) => allPermissions.has(perm))
+        : requiredList;
+    return effectiveRequired.some((perm) => userPermissions.has(perm));
+  };
+
   const items = [
     {
       name: "Dashboard",
       pathname: "/home",
       icon: <FaThLarge />,
       subItems: [],
+      permissions: "ADMIN_PANEL",
     },
     {
       name: "Patients",
@@ -57,19 +98,22 @@ const SideBar = () => {
         </div>
       ),
       subItems: [],
+      permissions: "LIST_USERS",
     },
     {
       name: "Docteurs",
       pathname: "/doctors",
       icon: <FaUserMd />,
       subItems: [],
+      permissions: "LIST_USERS",
     },
 
-     {
+    {
       name: "Specialite",
       pathname: "/specialite",
-      icon: <GraduationCap  />,
+      icon: <GraduationCap />,
       subItems: [],
+      permissions: "LIST_SPECIALITIES",
     },
 
     {
@@ -77,18 +121,21 @@ const SideBar = () => {
       pathname: "/abonnement",
       icon: <FaCreditCard />,
       subItems: [],
+      permissions: "LIST_ABONNEMENTS",
     },
     {
       name: "Rendez-vous",
       pathname: "/rendez_vous",
       icon: <FaCalendarCheck />,
       subItems: [],
+      permissions: "LIST_RESERVATIONS",
     },
     {
       name: "Transactions",
       pathname: "/transaction",
       icon: <FaCreditCard />,
       subItems: [],
+      permissions: "LIST_TRANSACTIONS",
     },
 
     /*    {
@@ -106,10 +153,21 @@ const SideBar = () => {
       pathname: "/ordonnance",
       icon: <FaPrescriptionBottleAlt />,
       subItems: [
-        { name: t("Protocole"), pathname: "/ordonnance", icon: <FaVirus /> },
+        {
+          name: t("Protocole"),
+          pathname: "/ordonnance",
+          icon: <FaVirus />,
+          permissions: "LIST_ORDONANCES",
+        },
 
-        { name: t("Medicament"), pathname: "/medicamant", icon: <FaPills /> },
+        {
+          name: t("Medicament"),
+          pathname: "/medicamant",
+          icon: <FaPills />,
+          permissions: "LIST_MEDICAMENTS",
+        },
       ],
+      permissions: ["LIST_ORDONANCES", "LIST_MEDICAMENTS"],
     },
 
     {
@@ -117,6 +175,7 @@ const SideBar = () => {
       pathname: "/message_structure",
       icon: <FaFileAlt />,
       subItems: [],
+      permissions: "LIST_FICHES",
     },
     {
       name: "Formation Continue",
@@ -127,9 +186,16 @@ const SideBar = () => {
           name: t("Formation"),
           pathname: "/formation",
           icon: <FaChalkboardTeacher />,
+          permissions: "LIST_FORMATIONS_CONTINUE",
         },
-        { name: t("Catégorie"), pathname: "/categorie", icon: <FaTags /> },
+        {
+          name: t("Catégorie"),
+          pathname: "/categorie",
+          icon: <FaTags />,
+          permissions: "LIST_CATEGORIES",
+        },
       ],
+      permissions: ["LIST_FORMATIONS_CONTINUE", "LIST_CATEGORIES"],
     },
 
     {
@@ -141,33 +207,51 @@ const SideBar = () => {
           name: t("Vidéos Educatives"),
           pathname: "/videos",
           icon: <FaVideo />,
+          permissions: "LIST_VIDEOS",
         },
         {
           name: t("Catégorie"),
           pathname: "/categorie_video",
           icon: <FaTags />,
+          permissions: "LIST_CATEGORIES_VIDEO",
         },
       ],
+      permissions: ["LIST_VIDEOS", "LIST_CATEGORIES_VIDEO"],
     },
-    {
+    /*   {
       name: "Synchronisation",
       pathname: "/synchronisation",
       icon: <FaSyncAlt />,
       subItems: [],
-    },
+    }, */
     {
       name: "Administrateurs",
       pathname: "/admin/users",
       icon: <FaUser />,
       subItems: [],
+      permissions: ["LIST_USERS", "GET_USERS", "ASSIGN_USER_ROLES"],
     },
     {
       name: "Rôles",
       pathname: "/admin/roles",
       icon: <FaTags />,
       subItems: [],
+      permissions: ["LIST_ROLES", "GET_ROLES", "ASSIGN_ROLE_PERMISSIONS"],
     },
   ];
+
+  const visibleItems = items
+    .map((item) => {
+      if (!item.subItems || item.subItems.length === 0) return item;
+      const filteredSub = item.subItems.filter((subItem: any) =>
+        hasPermission(subItem.permissions)
+      );
+      return { ...item, subItems: filteredSub };
+    })
+    .filter((item: any) => {
+      const hasSub = item.subItems && item.subItems.length > 0;
+      return hasPermission(item.permissions) || hasSub;
+    });
 
   return (
     <div className="h-full w-full flex flex-col bg-primary py-6 px-4 dark:bg-[#1d0553]">
@@ -181,7 +265,7 @@ const SideBar = () => {
       <div className="h-px bg-gray-300 mb-6 w-full" />
 
       <div className="flex-1 flex flex-col gap-4 overflow-y-auto">
-        {items.map((item, index) => (
+        {visibleItems.map((item, index) => (
           <div key={index} className="flex flex-col">
             <div
               onClick={() =>

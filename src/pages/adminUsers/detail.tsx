@@ -19,12 +19,14 @@ import {
 import TotalLoad from "src/components/components/totalLoad";
 import useAdminUserStore from "src/store/adminUserStore";
 import useRoleStore from "src/store/roleStore";
+import useStoreVerifyUser from "src/store/users/verify";
 
 const AdminUserDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [verifying, setVerifying] = useState(false);
 
   const {
     selectedAdmin,
@@ -36,6 +38,7 @@ const AdminUserDetail = () => {
     error,
   } = useAdminUserStore();
   const { roles, fetchRoles } = useRoleStore();
+  const { verifyUser } = useStoreVerifyUser();
 
   useEffect(() => {
     if (id) {
@@ -78,6 +81,17 @@ const AdminUserDetail = () => {
     setIsModalOpen(false);
   };
 
+  const handleVerifyUser = async () => {
+    if (!id || selectedAdmin.isVerified) return;
+    try {
+      setVerifying(true);
+      await verifyUser(id);
+      await fetchAdminById(id);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   return (
     <div className="p-6">
       <h1
@@ -92,6 +106,17 @@ const AdminUserDetail = () => {
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Informations générales</CardTitle>
+          <Button
+            variant="outline"
+            onClick={handleVerifyUser}
+            disabled={verifying || selectedAdmin.isVerified}
+          >
+            {selectedAdmin.isVerified
+              ? "Compte déjà vérifié"
+              : verifying
+                ? "Vérification..."
+                : "Vérifier le compte"}
+          </Button>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
@@ -167,7 +192,7 @@ const AdminUserDetail = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Ajouter un rôle"
-        size="md"
+        size="full"
       >
         <div className="space-y-4">
           <Select
@@ -205,4 +230,3 @@ const AdminUserDetail = () => {
 };
 
 export default AdminUserDetail;
-

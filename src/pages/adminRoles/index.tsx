@@ -216,7 +216,7 @@ const AdminRoles = () => {
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         title="Créer un rôle"
-        size="md"
+        size="full"
       >
         <div className="space-y-4">
           <div>
@@ -256,7 +256,7 @@ const AdminRoles = () => {
         isOpen={Boolean(editRole)}
         onClose={() => setEditRole(null)}
         title="Modifier le rôle"
-        size="md"
+        size="full"
       >
         <div className="space-y-4">
           <div>
