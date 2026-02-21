@@ -61,11 +61,11 @@ const SideBar = () => {
   const userPermissions = new Set<string>(
     Array.isArray(storedUser?.permissions)
       ? storedUser.permissions.map((perm: Permission) => perm.name)
-      : []
+      : [],
   );
 
   const allPermissions = new Set<string>(
-    Array.isArray(permissions) ? permissions.map((perm) => perm.name) : []
+    Array.isArray(permissions) ? permissions.map((perm) => perm.name) : [],
   );
 
   const hasPermission = (required?: string | string[]) => {
@@ -88,6 +88,31 @@ const SideBar = () => {
       subItems: [],
       permissions: "ADMIN_PANEL",
     },
+
+    {
+      name: "Administration",
+      pathname: "/admin/users",
+      icon: <FaUser />,
+      subItems: [
+        {
+          name: "Administrateurs",
+          pathname: "/admin/users",
+          icon: <FaUser />,
+          subItems: [],
+          permissions: ["LIST_USERS", "GET_USERS", "ASSIGN_USER_ROLES"],
+        },
+
+        {
+          name: "Rôles",
+          pathname: "/admin/roles",
+          icon: <FaTags />,
+          subItems: [],
+          permissions: ["LIST_ROLES", "GET_ROLES", "ASSIGN_ROLE_PERMISSIONS"],
+        },
+      ],
+      permissions: ["LIST_ORDONANCES", "LIST_MEDICAMENTS"],
+    },
+
     {
       name: "Patients",
       pathname: "/patients",
@@ -224,27 +249,13 @@ const SideBar = () => {
       icon: <FaSyncAlt />,
       subItems: [],
     }, */
-    {
-      name: "Administrateurs",
-      pathname: "/admin/users",
-      icon: <FaUser />,
-      subItems: [],
-      permissions: ["LIST_USERS", "GET_USERS", "ASSIGN_USER_ROLES"],
-    },
-    {
-      name: "Rôles",
-      pathname: "/admin/roles",
-      icon: <FaTags />,
-      subItems: [],
-      permissions: ["LIST_ROLES", "GET_ROLES", "ASSIGN_ROLE_PERMISSIONS"],
-    },
   ];
 
   const visibleItems = items
     .map((item) => {
       if (!item.subItems || item.subItems.length === 0) return item;
       const filteredSub = item.subItems.filter((subItem: any) =>
-        hasPermission(subItem.permissions)
+        hasPermission(subItem.permissions),
       );
       return { ...item, subItems: filteredSub };
     })
