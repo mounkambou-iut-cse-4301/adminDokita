@@ -40,22 +40,7 @@ import useStoreOneFiche from "src/store/fiche/getOne";
 import Pagination from "../../components/components/ui/pagination";
 import config from "src/config/config.dev";
 import { Button } from "../../components/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../../components/components/ui/dialog";
-import { Input } from "../../components/components/ui/input";
-import { Label } from "../../components/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/components/ui/select";
+import { MessageStructEditForm } from "./MessageStructEditForm";
 import type { Permission } from "src/types/admin";
 
 type FicheOption = {
@@ -69,6 +54,7 @@ type FicheQuestion = {
   label: string;
   order: number;
   options?: FicheOption[];
+  multiple?: boolean;
 };
 
 type Fiche = {
@@ -95,6 +81,7 @@ type EditQuestion = {
   type: QuestionType;
   order: number;
   options?: OptionItem[];
+  multiple?: boolean;
 };
 
 function uid(prefix = "") {
@@ -126,6 +113,7 @@ export default function MessageStruct() {
   const [formLabel, setFormLabel] = useState("");
   const [formType, setFormType] = useState<QuestionType>("TEXT");
   const [formOptions, setFormOptions] = useState<OptionItem[]>([]);
+  const [formMultiple, setFormMultiple] = useState(false);
 
   const { AllFiche, loadingAllFiche, fetchAllFiche, count } =
     useStoreAllFiche();
@@ -285,6 +273,7 @@ export default function MessageStruct() {
     setFormLabel("");
     setFormType("TEXT");
     setFormOptions([]);
+    setFormMultiple(false);
     setEditDialogOpen(true);
   };
 
@@ -293,6 +282,7 @@ export default function MessageStruct() {
     setFormLabel(q.label);
     setFormType(q.type);
     setFormOptions(q.options ? q.options.map((o) => ({ ...o })) : []);
+    setFormMultiple(Boolean(q.multiple));
     setEditDialogOpen(true);
   };
 
@@ -308,6 +298,7 @@ export default function MessageStruct() {
                 label: formLabel.trim(),
                 type: formType,
                 options: formType === "SELECT" ? formOptions : [],
+                multiple: formType === "SELECT" ? formMultiple : false,
               }
             : p,
         ),
@@ -318,6 +309,7 @@ export default function MessageStruct() {
         label: formLabel.trim(),
         type: formType,
         options: formType === "SELECT" ? formOptions : [],
+        multiple: formType === "SELECT" ? formMultiple : false,
         order: editQuestions.length,
       };
       setEditQuestions((prev) => [...prev, newQ]);
@@ -619,188 +611,37 @@ export default function MessageStruct() {
         size="full"
         height={85}
       >
-        <div className="max-w-5xl mx-auto mt-6 space-y-2 p-1">
-          <h1 className="text-2xl font-bold mb-10 ">
-            Formulaire Modification fiche structurée:
-          </h1>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm border">
-            <div className="grid sm:grid-cols-3 gap-4 items-end">
-              <div>
-                <Label>Titre</Label>
-                <Input
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="Titre du formulaire"
-                />
-              </div>
-
-              <div>
-                <Label>Description</Label>
-                <Input
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="Description du formulaire"
-                />
-              </div>
-
-              <Button
-                onClick={openCreateDialog}
-                className="flex items-center gap-2 text-white"
-              >
-                <Plus size={14} /> Ajouter une question
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {editQuestions.length === 0 && (
-              <p className="text-sm text-gray-500">
-                Aucune question ajoutée pour le moment.
-              </p>
-            )}
-
-            {editQuestions.map((q) => (
-              <Card key={q.id} className="p-4">
-                <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-medium text-lg">{q.label}</h3>
-                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                        {q.type}
-                      </span>
-                    </div>
-
-                    {q.type === "SELECT" && q.options?.length ? (
-                      <ul className="mt-2 text-sm text-gray-600 list-disc pl-5">
-                        {q.options.map((o) => (
-                          <li key={o.id}>{o.label}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="mt-2 text-sm text-gray-400">
-                        Pas d’options / champ texte
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => openEditDialog(q)}
-                      className="flex items-center gap-2"
-                    >
-                      <Edit2 size={14} /> Modifier
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => removeQuestion(q.id)}
-                      className="flex items-center gap-2"
-                    >
-                      <Trash2 size={14} /> Supprimer
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="flex justify-end text-white">
-            <Button onClick={handleUpdateFiche} disabled={savingEdit}>
-              {savingEdit && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
-              {savingEdit ? "Modification..." : "Enregistrer le formulaire"}
-            </Button>
-          </div>
-
-          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-            <DialogContent className="sm:max-w-4xl w-[90vw] max-h-[85vh]">
-              <DialogHeader>
-                <DialogTitle className="bg-white">
-                  {editingQuestion
-                    ? "Modifier la question"
-                    : "Ajouter une question"}
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-4 mt-2">
-                <div>
-                  <Label>Label</Label>
-                  <Input
-                    value={formLabel}
-                    onChange={(e) => setFormLabel(e.target.value)}
-                    placeholder="Ex: Depuis quand as-tu le palu ?"
-                  />
-                </div>
-
-                <div>
-                  <Label>Type</Label>
-                  <Select
-                    onValueChange={(val) => setFormType(val as QuestionType)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={formType} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="TEXT">TEXT</SelectItem>
-                      <SelectItem value="SELECT">SELECT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formType === "SELECT" && (
-                  <div className="border rounded p-3 space-y-3 bg-gray-50">
-                    <div className="flex items-center justify-between text-white">
-                      <Label>Options</Label>
-                      <Button size="sm" onClick={addOption}>
-                        + Ajouter une option
-                      </Button>
-                    </div>
-
-                    {formOptions.length === 0 && (
-                      <p className="text-sm text-gray-500">
-                        Aucune option pour le moment.
-                      </p>
-                    )}
-
-                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2 ">
-                      {formOptions.map((opt) => (
-                        <div key={opt.id} className="flex gap-2 items-center">
-                          <Input
-                            value={opt.label}
-                            onChange={(e) =>
-                              updateOption(opt.id, "label", e.target.value)
-                            }
-                            placeholder="Label (ex: Un jour)"
-                            className="w-[750px]"
-                          />
-                          <Button
-                            variant="ghost"
-                            onClick={() => removeOption(opt.id)}
-                            className="px-2 bg-red-500 text-white"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button
-                  variant="secondary"
-                  onClick={() => setEditDialogOpen(false)}
-                >
-                  Annuler
-                </Button>
-                <Button onClick={saveQuestion} disabled={!formLabel.trim()}>
-                  {editingQuestion ? "Enregistrer" : "Ajouter"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <MessageStructEditForm
+          editTitle={editTitle}
+          editDescription={editDescription}
+          editQuestions={editQuestions}
+          savingEdit={savingEdit}
+          onTitleChange={setEditTitle}
+          onDescriptionChange={setEditDescription}
+          onOpenCreateDialog={openCreateDialog}
+          onOpenEditDialog={openEditDialog}
+          onRemoveQuestion={removeQuestion}
+          onSubmit={handleUpdateFiche}
+          editDialogOpen={editDialogOpen}
+          onEditDialogOpenChange={setEditDialogOpen}
+          editingQuestion={editingQuestion}
+          formLabel={formLabel}
+          onFormLabelChange={setFormLabel}
+          formType={formType}
+          onFormTypeChange={(val) => {
+            setFormType(val);
+            if (val !== "SELECT") {
+              setFormMultiple(false);
+            }
+          }}
+          formOptions={formOptions}
+          onAddOption={addOption}
+          onUpdateOption={updateOption}
+          onRemoveOption={removeOption}
+          onSaveQuestion={saveQuestion}
+          formMultiple={formMultiple}
+          onFormMultipleChange={setFormMultiple}
+        />
       </TMModal>
     </div>
   );
@@ -812,6 +653,7 @@ function mapQuestionsToEdit(questions: FicheQuestion[]): EditQuestion[] {
     type: q.type as QuestionType,
     label: q.label,
     order: q.order,
+    multiple: Boolean(q.multiple),
     options: (q.options ?? []).map((opt, index) => ({
       id: `${q.id}_opt_${index}`,
       label: opt.label,
@@ -826,6 +668,7 @@ function mapEditToQuestions(questions: EditQuestion[]): FicheQuestion[] {
     type: q.type,
     label: q.label,
     order: idx,
+    multiple: q.type === "SELECT" ? Boolean(q.multiple) : false,
     options:
       q.type === "SELECT"
         ? (q.options ?? [])

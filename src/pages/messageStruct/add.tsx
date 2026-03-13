@@ -9,6 +9,7 @@ import {
 } from "../../components/components/ui/dialog";
 import { Input } from "../../components/components/ui/input";
 import { Label } from "../../components/components/ui/label";
+import { Checkbox } from "../../components/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ type Question = {
   type: QuestionType;
   order: number;
   options?: OptionItem[];
+  multiple?: boolean;
 };
 
 function uid(prefix = "") {
@@ -49,12 +51,14 @@ export default function PaludismeAnamneseBuilder() {
   const [formLabel, setFormLabel] = useState("");
   const [formType, setFormType] = useState<QuestionType>("TEXT");
   const [formOptions, setFormOptions] = useState<OptionItem[]>([]);
+  const [formMultiple, setFormMultiple] = useState(false);
 
   const openCreateDialog = () => {
     setEditingQuestion(null);
     setFormLabel("");
     setFormType("TEXT");
     setFormOptions([]);
+    setFormMultiple(false);
     setDialogOpen(true);
   };
 
@@ -63,6 +67,7 @@ export default function PaludismeAnamneseBuilder() {
     setFormLabel(q.label);
     setFormType(q.type);
     setFormOptions(q.options ? q.options.map((o) => ({ ...o })) : []);
+    setFormMultiple(Boolean(q.multiple));
     setDialogOpen(true);
   };
 
@@ -70,24 +75,26 @@ export default function PaludismeAnamneseBuilder() {
     if (!formLabel.trim()) return;
 
     if (editingQuestion) {
-      setQuestions((prev) =>
-        prev.map((p) =>
-          p.id === editingQuestion.id
-            ? {
-                ...p,
-                label: formLabel.trim(),
-                type: formType,
-                options: formType === "SELECT" ? formOptions : [],
-              }
-            : p,
-        ),
-      );
+              setQuestions((prev) =>
+                prev.map((p) =>
+                  p.id === editingQuestion.id
+                    ? {
+                        ...p,
+                        label: formLabel.trim(),
+                        type: formType,
+                        options: formType === "SELECT" ? formOptions : [],
+                        multiple: formType === "SELECT" ? formMultiple : false,
+                      }
+                    : p,
+                ),
+              );
     } else {
       const newQ: Question = {
         id: uid("q_"),
         label: formLabel.trim(),
         type: formType,
         options: formType === "SELECT" ? formOptions : [],
+        multiple: formType === "SELECT" ? formMultiple : false,
         order: questions.length,
       };
       setQuestions((prev) => [...prev, newQ]);
@@ -127,6 +134,7 @@ export default function PaludismeAnamneseBuilder() {
         label: q.label,
         type: q.type,
         order: idx,
+        multiple: q.type === "SELECT" ? Boolean(q.multiple) : false,
         options:
           q.type === "SELECT"
             ? q.options?.map((o) => ({
@@ -283,7 +291,13 @@ export default function PaludismeAnamneseBuilder() {
               <div>
                 <Label>Type</Label>
                 <Select
-                  onValueChange={(val) => setFormType(val as QuestionType)}
+                  onValueChange={(val) => {
+                    const nextType = val as QuestionType;
+                    setFormType(nextType);
+                    if (nextType !== "SELECT") {
+                      setFormMultiple(false);
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={formType} />
@@ -297,6 +311,16 @@ export default function PaludismeAnamneseBuilder() {
 
               {formType === "SELECT" && (
                 <div className="border rounded p-3 space-y-3 bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={formMultiple}
+                      onCheckedChange={(value) =>
+                        setFormMultiple(Boolean(value))
+                      }
+                    />
+                    <Label>Réponse multiples</Label>
+                  </div>
+
                   <div className="flex items-center justify-between text-white">
                     <Label>Options</Label>
                     <Button size="sm" onClick={addOption}>
