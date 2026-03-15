@@ -6,6 +6,7 @@ import config from "src/config/config.dev";
 interface UserFilters {
   page?: number;
   limit?: number;
+  q?: string;
 }
 
 interface AllFicheState {
@@ -33,6 +34,7 @@ const useStoreAllFiche = create<AllFicheState>((set, get) => ({
     if (filters) {
       if (filters.page) params.append("page", String(filters.page));
       if (filters.limit) params.append("limit", String(filters.limit));
+      if (filters.q) params.append("q", filters.q);
     }
 
     try {

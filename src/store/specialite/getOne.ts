@@ -1,45 +1,65 @@
-// src/store/useStoreOneOrdonnance.ts
+// src/store/useStoreOneSpecialite.ts
 import { create } from "zustand";
 import axios from "axios";
 import config from "src/config/config.dev";
 
-interface VehicleState {
-  OneOrdonnance: any; // L'état pour stocker les données de véhicules
-  loadingOneOrdonnance: boolean; // Nouveau state pour suivre l'état du chargement
-  fetchOneOrdonnance: (user_id: string) => Promise<void>; // Fonction pour récupérer les véhicules
+interface SpecialiteState {
+  OneSpecialite: any;
+  loadingOneSpecialite: boolean;
+  fetchOneSpecialite: (specialiteId: string) => Promise<void>;
 }
 
-const useStoreOneOrdonnance = create<VehicleState>((set) => ({
-  OneOrdonnance: null,
-  loadingOneOrdonnance: false,
-  fetchOneOrdonnance: async (user_id: string) => {
+const useStoreOneSpecialite = create<SpecialiteState>((set) => ({
+  OneSpecialite: null,
+  loadingOneSpecialite: false,
+  fetchOneSpecialite: async (specialiteId: string) => {
     const token = localStorage.getItem("token");
-
-    if (!token) {
-      throw new Error("User is not authenticated");
-    }
 
     if (!token) {
       console.error("No token available. User might not be authenticated.");
       return;
     }
-    set({ loadingOneOrdonnance: true }); // Démarre le chargement
+
+    set({ loadingOneSpecialite: true });
     try {
       const response = await axios.get(
-        `${config.mintClient}protocoles-ordonance/${user_id}/`,
+        `${config.mintClient}specialities/${specialiteId}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Pass the token in headers
+            Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
-      set({ OneOrdonnance: response.data.item, loadingOneOrdonnance: false }); // Met à jour les données et arrête le chargement
+      set({
+        OneSpecialite: response.data.item ?? response.data,
+        loadingOneSpecialite: false,
+      });
     } catch (error) {
-      console.error("Error fetching OneOrdonnance:", error);
-      set({ loadingOneOrdonnance: false }); // Arrête le chargement en cas d'erreur
+      const status = (error as any)?.response?.status;
+      if (status === 404) {
+        try {
+          const response = await axios.get(
+            `${config.mintClient}specialities/${specialiteId}/`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+          set({
+            OneSpecialite: response.data.item ?? response.data,
+            loadingOneSpecialite: false,
+          });
+          return;
+        } catch (retryError) {
+          console.error("Error fetching OneSpecialite:", retryError);
+        }
+      } else {
+        console.error("Error fetching OneSpecialite:", error);
+      }
+      set({ loadingOneSpecialite: false });
     }
   },
 }));
 
-export default useStoreOneOrdonnance;
-
+export default useStoreOneSpecialite;

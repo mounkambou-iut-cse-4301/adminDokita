@@ -42,6 +42,7 @@ import config from "src/config/config.dev";
 import { Button } from "../../components/components/ui/button";
 import { MessageStructEditForm } from "./MessageStructEditForm";
 import type { Permission } from "src/types/admin";
+import { FaSearch } from "react-icons/fa";
 
 type FicheOption = {
   label: string;
@@ -69,7 +70,7 @@ type Fiche = {
   updatedAt: string;
 };
 
-const PAGE_SIZE = 7;
+const PAGE_SIZE = 5;
 
 type QuestionType = "TEXT" | "SELECT";
 
@@ -114,6 +115,8 @@ export default function MessageStruct() {
   const [formType, setFormType] = useState<QuestionType>("TEXT");
   const [formOptions, setFormOptions] = useState<OptionItem[]>([]);
   const [formMultiple, setFormMultiple] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
 
   const { AllFiche, loadingAllFiche, fetchAllFiche, count } =
     useStoreAllFiche();
@@ -162,10 +165,24 @@ export default function MessageStruct() {
   };
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
+
+  useEffect(() => {
     if (canList) {
-      fetchAllFiche({ page, limit: PAGE_SIZE });
+      fetchAllFiche({
+        page,
+        limit: PAGE_SIZE,
+        q: debouncedSearch,
+      });
     }
-  }, [page, canList, fetchAllFiche]);
+  }, [page, canList, fetchAllFiche, debouncedSearch]);
 
   useEffect(() => {
     if (OneFiche && selectedFicheId === OneFiche.ficheId) {
@@ -425,6 +442,22 @@ export default function MessageStruct() {
           </CardTitle>
         </CardHeader>
       </Card>
+
+      <div className="flex items-center justify-between mb-1 border border-gray-200 p-2 bg-white">
+        <div className="relative flex gap-2 ">
+          <input
+            type="text"
+            placeholder="Rechercher"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="pl-10 pr-4 py-1 rounded-md bg-white border border-gray-300 focus:outline-none"
+          />
+          <FaSearch className="absolute top-3 left-3 text-gray-400" />
+        </div>
+      </div>
 
       <Table className="bg-white">
         <TableHeader>

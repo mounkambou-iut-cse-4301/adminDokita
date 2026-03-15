@@ -24,7 +24,6 @@ import {
   CalendarIcon,
   PlusCircle,
 } from "lucide-react";
-import { Input } from "../../components/components/ui/input";
 import { CustomCheckbox } from "../../components/components/ui/customcheck";
 import { CustomSwitch } from "../../components/components/ui/customswitch";
 import React, { useEffect, useState } from "react";
@@ -38,13 +37,15 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, Transition } from "@headlessui/react";
 import TMModal from "../../components/components/ui/TM_Modal";
 import TotalLoad from "../../components/components/totalLoad";
-import { Label } from "../../components/components/ui/label";
 
 import Pagination from "../../components/components/ui/pagination";
 import { useForm } from "react-hook-form";
 
-import DetailOrdonnance from "./detailMessageStruct";
+import DetailSpecialite from "./detailMessageStruct";
 import useStoreAllSpecialite from "src/store/specialite/getAll";
+import useStoreOneSpecialite from "src/store/specialite/getOne";
+import config from "src/config/config.dev";
+import { SpecialiteEditForm } from "./SpecialiteEditForm";
 
 type FilterFormValues = {
   createdAt?: Date;
@@ -57,6 +58,10 @@ export default function Specialite() {
   const [isChecked, setIsChecked] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [detailCard, setDetailCard] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [idcartes, setIdcartes] = useState("");
 
@@ -68,6 +73,16 @@ export default function Specialite() {
 
   const { AllSpecialite, loadingAllSpecialite, fetchAllSpecialite, count } =
     useStoreAllSpecialite();
+  const { OneSpecialite, loadingOneSpecialite, fetchOneSpecialite } =
+    useStoreOneSpecialite();
+
+  const [editForm, setEditForm] = useState({
+    name: "",
+    consultationPrice: 0,
+    consultationDuration: 0,
+    planMonthAmount: 0,
+    numberOfTimePlanReservation: 1,
+  });
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -82,6 +97,125 @@ export default function Specialite() {
   useEffect(() => {
     fetchAllSpecialite({ page, limit: 5, q: debouncedSearch });
   }, [page, debouncedSearch, fetchAllSpecialite]);
+
+  useEffect(() => {
+    if (!editOpen || !OneSpecialite) return;
+    if (
+      selectedId &&
+      String(OneSpecialite.specialityId) !== String(selectedId)
+    )
+      return;
+
+    setEditForm({
+      name: OneSpecialite.name ?? "",
+      consultationPrice: Number(OneSpecialite.consultationPrice ?? 0),
+      consultationDuration: Number(OneSpecialite.consultationDuration ?? 0),
+      planMonthAmount: Number(OneSpecialite.planMonthAmount ?? 0),
+      numberOfTimePlanReservation: Number(
+        OneSpecialite.numberOfTimePlanReservation ?? 1,
+      ),
+    });
+  }, [editOpen, OneSpecialite, selectedId]);
+
+  const updateEditField = (
+    key:
+      | "name"
+      | "consultationPrice"
+      | "consultationDuration"
+      | "planMonthAmount"
+      | "numberOfTimePlanReservation",
+    value: string,
+  ) => {
+    if (key === "name") {
+      setEditForm((prev) => ({ ...prev, name: value }));
+      return;
+    }
+    const numValue = Number(value);
+    setEditForm((prev) => ({
+      ...prev,
+      [key]: Number.isNaN(numValue) ? 0 : numValue,
+    }));
+  };
+
+  const getToken = () => localStorage.getItem("token");
+
+  const fetchWithFallback = async (
+    path: string,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const baseUrl = `${config.mintClient}${path}`;
+    const firstTry = await fetch(baseUrl, init);
+    if (firstTry.ok || firstTry.status !== 404) return firstTry;
+    return fetch(`${baseUrl}/`, init);
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedId) return;
+    setSavingEdit(true);
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error("User is not authenticated");
+      }
+
+      const response = await fetchWithFallback(
+        `specialities/${selectedId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: editForm.name,
+            consultationPrice: Number(editForm.consultationPrice),
+            consultationDuration: Number(editForm.consultationDuration),
+            planMonthAmount: Number(editForm.planMonthAmount),
+            numberOfTimePlanReservation: Number(
+              editForm.numberOfTimePlanReservation,
+            ),
+          }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Echec modification");
+      }
+      await fetchAllSpecialite({ page, limit: 5, q: debouncedSearch });
+      setEditOpen(false);
+    } catch (error) {
+      console.error("Error updating specialite:", error);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedId) return;
+    setDeleting(true);
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error("User is not authenticated");
+      }
+      const response = await fetchWithFallback(
+        `specialities/${selectedId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Echec suppression");
+      }
+      await fetchAllSpecialite({ page, limit: 5, q: debouncedSearch });
+      setIsOpen(false);
+      setSelectedId(null);
+    } catch (error) {
+      console.error("Error deleting specialite:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loadingAllSpecialite) {
     return <TotalLoad />;
@@ -189,7 +323,21 @@ export default function Specialite() {
                     <ul className="space-y-2 cursor-pointer">
                       <li
                         className="flex items-center gap-2 p-2 border-b"
-                        onClick={() => {
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedId(s.specialityId);
+                          fetchOneSpecialite(String(s.specialityId));
+                          setEditOpen(true);
+                        }}
+                      >
+                        <FaEdit className="text-gray-600" />
+                        <span>Modifier</span>
+                      </li>
+
+                      <li
+                        className="flex items-center gap-2 p-2 border-b"
+                        onClick={(event) => {
+                          event.stopPropagation();
                           setDetailCard(true);
                           setIdcartes(String(s.specialityId));
                         }}
@@ -200,7 +348,12 @@ export default function Specialite() {
 
                       <li
                         className="flex items-center gap-2 p-2"
-                        onClick={() => setIsOpen(true)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedId(s.specialityId);
+                          fetchOneSpecialite(String(s.specialityId));
+                          setIsOpen(true);
+                        }}
                       >
                         <FaTrash className="text-red-600" />
                         <span className="text-red-600">Supprimer</span>
@@ -250,10 +403,10 @@ export default function Specialite() {
                 </button>
                 <button
                   className="bg-red-600 text-white px-4 py-2 rounded-md"
-                  //  onClick={handleDeleteUser}
-                  // disabled={loadingdeleteUsers}
+                  onClick={handleDelete}
+                  disabled={deleting}
                 >
-                  supprimer
+                  {deleting ? "Suppression..." : "Supprimer"}
                 </button>
               </div>
             </Dialog.Panel>
@@ -262,16 +415,34 @@ export default function Specialite() {
       </Transition>
 
       <TMModal
+        isOpen={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+        }}
+        size="full"
+        height={70}
+      >
+        <SpecialiteEditForm
+          loading={loadingOneSpecialite}
+          saving={savingEdit}
+          values={editForm}
+          onChange={updateEditField}
+          onCancel={() => setEditOpen(false)}
+          onSubmit={handleUpdate}
+        />
+      </TMModal>
+
+      <TMModal
         isOpen={detailCard}
         onClose={() => {
           setDetailCard(false);
           // window.location.reload();
         }}
         // title="Detail carte"
-        size="md"
+        size="full"
         height={70}
       >
-        <DetailOrdonnance idcartes={idcartes} />
+        <DetailSpecialite idcartes={idcartes} />
       </TMModal>
     </div>
   );
