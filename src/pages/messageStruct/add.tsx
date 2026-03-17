@@ -75,19 +75,19 @@ export default function PaludismeAnamneseBuilder() {
     if (!formLabel.trim()) return;
 
     if (editingQuestion) {
-              setQuestions((prev) =>
-                prev.map((p) =>
-                  p.id === editingQuestion.id
-                    ? {
-                        ...p,
-                        label: formLabel.trim(),
-                        type: formType,
-                        options: formType === "SELECT" ? formOptions : [],
-                        multiple: formType === "SELECT" ? formMultiple : false,
-                      }
-                    : p,
-                ),
-              );
+      setQuestions((prev) =>
+        prev.map((p) =>
+          p.id === editingQuestion.id
+            ? {
+                ...p,
+                label: formLabel.trim(),
+                type: formType,
+                options: formType === "SELECT" ? formOptions : [],
+                multiple: formType === "SELECT" ? formMultiple : false,
+              }
+            : p,
+        ),
+      );
     } else {
       const newQ: Question = {
         id: uid("q_"),
@@ -314,9 +314,14 @@ export default function PaludismeAnamneseBuilder() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formMultiple}
-                      onCheckedChange={(value) =>
-                        setFormMultiple(Boolean(value))
-                      }
+                      onCheckedChange={(value) => setFormMultiple(!!value)}
+                      className={`
+    border-2 text-white
+    data-[state=checked]:bg-green-500
+    data-[state=checked]:border-green-500
+    data-[state=unchecked]:bg-red-500
+    data-[state=unchecked]:border-red-500
+  `}
                     />
                     <Label>Réponse multiples</Label>
                   </div>
@@ -337,10 +342,7 @@ export default function PaludismeAnamneseBuilder() {
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-2 ">
                     {" "}
                     {formOptions.map((opt) => (
-                      <div
-                        key={opt.id}
-                        className="flex gap-2 items-center"
-                      >
+                      <div key={opt.id} className="flex gap-2 items-center">
                         <Input
                           value={opt.label}
                           onChange={(e) =>
