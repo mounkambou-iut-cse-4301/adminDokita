@@ -189,7 +189,9 @@ export function MessageStructEditForm({
         <DialogContent className="sm:max-w-4xl w-[90vw] max-h-[85vh]">
           <DialogHeader>
             <DialogTitle className="bg-white">
-              {editingQuestion ? "Modifier la question" : "Ajouter une question"}
+              {editingQuestion
+                ? "Modifier la question"
+                : "Ajouter une question"}
             </DialogTitle>
           </DialogHeader>
 
@@ -205,7 +207,9 @@ export function MessageStructEditForm({
 
             <div>
               <Label>Type</Label>
-              <Select onValueChange={(val) => onFormTypeChange(val as QuestionType)}>
+              <Select
+                onValueChange={(val) => onFormTypeChange(val as QuestionType)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={formType} />
                 </SelectTrigger>
@@ -221,9 +225,14 @@ export function MessageStructEditForm({
                 <div className="flex items-center gap-2">
                   <Checkbox
                     checked={formMultiple}
-                    onCheckedChange={(value) =>
-                      onFormMultipleChange(Boolean(value))
-                    }
+                    onCheckedChange={(value) => onFormMultipleChange(!!value)}
+                    className={`
+    border-2 text-white transition-colors duration-200
+    data-[state=checked]:bg-green-500
+    data-[state=checked]:border-green-500
+    data-[state=unchecked]:bg-red-500
+    data-[state=unchecked]:border-red-500
+  `}
                   />
                   <Label>Réponses multiples</Label>
                 </div>
